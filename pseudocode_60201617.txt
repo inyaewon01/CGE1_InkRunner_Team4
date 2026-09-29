@@ -1,0 +1,159 @@
+상시 scene
+1. title scene
+
+타이틀 화면
+
+title scene 로딩 완료
+scene 로딩 완료 시 터치하세요, 또는 타이틀 버튼 추가
+게임 플레이 버튼 클릭
+→ main scene 로드
+esc/종료 버튼 클릭
+→ 게임을 종료한다
+2. stage scene
+
+스테이지 선택 화면
+
+stage scene 로딩 완료
+→ 진행 상황에 따라 레벨 선택 버튼을 비활성화/활성화 시킨다
+레벨 선택 버튼 클릭
+→ 레벨에 알맞는 main scene 로드
+→ scene을 닫는다
+이전 버튼 클릭
+→ title scene 로드
+→ scene을 닫는다
+
+※ 스테이지 선택 화면을 임시 scene으로 둘지?
+각각 불러오는 것보다 효율적
+
+3. main scene
+
+인게임 화면
+
+Stage 1
+Stage 2
+Stage 3
+...
+main scene 로딩 완료
+해당 레벨에 story가 있을 경우 story scene 로드
+story scene이 제거될 경우 count scene 로드
+count scene은 3초 후에 제거되며, main game을 시작한다
+
+main game이 시작
+
+제거된 이후 맵과 장애물이 왼쪽으로 이동한다.
+잉크의 소모값 스테이터스를 on 시키며, 소모값 스테이터스를 on time으로 조정한다.
+
+3-1. 체력이 일정 이상일 경우
+
+스테이지의 난이도에 따라 장애물 스폰 빈도 변수를 조정한다.
+
+3-2. 체력이 일정 이하일 경우
+
+스테이지의 난이도에 따라 장애물 스폰 빈도 변수를 조정한다.
+
+3-3. 스페이스바를 눌러 점프할 경우
+
+캐릭터의 위치를 y축으로 이동시킨다.
+
+3-4. 캐릭터가 지형 collider에 닿아있지 않을 경우 (공중에 떠있을 때)
+
+캐릭터의 위치를 collider에 닿을 때까지 -y축으로 이동시킨다.
+
+3-5. 장애물에 부딪힌 경우
+
+일정량의 잉크값을 차감한다.
+
+3-6. 마우스 왼쪽 버튼을 눌러 길을 만들기 위해 잉크를 사용할 경우
+
+일정량의 잉크값을 차감한다.
+해당 장애물 위에 임시 오브젝트를 생성하고 collision을 on으로 한다.
+
+3-7. 마우스 왼쪽 버튼을 눌러 장애물을 없애기 위해 잉크를 사용할 경우
+
+일정량의 잉크값을 차감한다.
+해당 장애물의 collision을 off로 한다.
+
+3-8. 마우스 오른쪽 버튼을 눌러 잉크 종류를 바꿀 경우
+
+사용되는 잉크 값을 변경한다.
+스테이지 클리어 위치에 도착한 경우
+clear scene 로드
+scene을 닫는다
+잉크의 값이 0이 된 경우
+game over scene 로드
+scene을 닫는다
+4. clear scene
+
+클리어 화면
+
+clear scene 로딩 완료
+스테이지 선택 버튼 클릭
+stage scene 로드
+scene을 닫는다
+다음 스테이지 버튼 클릭
+다음 스테이지의 main scene 로드
+scene을 닫는다
+메인화면 버튼 클릭
+title scene 로드
+scene을 닫는다
+5. game over scene
+
+게임오버 화면
+
+game over scene 로딩 완료
+스테이지 선택 버튼 클릭
+stage scene 로드
+scene을 닫는다
+다시하기 버튼 클릭
+현재 스테이지의 main scene 로드
+scene을 닫는다
+메인화면 버튼 클릭
+title scene 로드
+scene을 닫는다
+임시 scene
+6. count scene
+
+게임 시작 이전 카운트다운 임시 화면
+
+count scene 로딩 완료
+애니메이션을 재생한다. 3-2-1 하는 카운트 다운
+scene을 닫는다
+7. setting scene
+
+설정 임시 화면
+
+count scene 로딩 완료
+재개 키 또는 여백 부분 클릭
+scene을 닫는다
+설정 키 클릭
+음향, 게임 감도 설정으로 넘어간다
+스테이지 키 클릭
+stage scene 로드
+scene을 닫는다
+현재 열려있는 main scene을 닫는다
+메인화면 키 클릭
+title scene 로드
+scene을 닫는다
+현재 열려있는 main scene을 닫는다
+8. script scene
+
+스토리 진행 임시 화면
+
+count scene 로딩 완료
+
+화면을 클릭
+
+2-1. 텍스트가 다 불러와지지 않았을 경우
+
+해당 텍스트를 전체 다 불러온다
+
+2-2. 텍스트가 다 불러와진 경우
+
+다음 텍스트로 넘어간다
+skip 키 클릭
+script scene의 마지막 텍스트로 넘어간다
+자동진행 키 클릭
+텍스트가 다 불러와질 경우 다음 텍스트로 넘어간다
+마지막 텍스트에서 화면을 클릭
+count scene을 로드한다
+(main scene의 1 참고)
