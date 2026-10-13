@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 613218368}
   - component: {fileID: 613218367}
   - component: {fileID: 613218366}
+  - component: {fileID: 613218369}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -255,7 +256,11 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+<<<<<<< .merge_file_5lZyGu
 --- !u!1001 &2479205272922871367
+=======
+--- !u!1001 &1518733122
+>>>>>>> .merge_file_pHODSK
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -269,11 +274,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
       propertyPath: m_LocalPosition.x
+<<<<<<< .merge_file_5lZyGu
       value: 5.42967
       objectReference: {fileID: 0}
     - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
       propertyPath: m_LocalPosition.y
       value: 2.54553
+=======
+      value: 0.8576422
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.508742
+>>>>>>> .merge_file_pHODSK
       objectReference: {fileID: 0}
     - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -317,4 +330,8 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 613218368}
+<<<<<<< .merge_file_5lZyGu
   - {fileID: 2479205272922871367}
+=======
+  - {fileID: 1518733122}
+>>>>>>> .merge_file_pHODSK
