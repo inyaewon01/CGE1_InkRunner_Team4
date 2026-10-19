@@ -1,0 +1,533 @@
+fileFormatVersion: 2
+guid: 6d70a969aff1bdb4abb59c9014936d3d
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3086021809909624009
+    second: InkWarrior-run-v1_0
+  - first:
+      213: 8862132007195669156
+    second: InkWarrior-run-v1_1
+  - first:
+      213: -3099643569469787066
+    second: InkWarrior-run-v1_2
+  - first:
+      213: 5166773454101932785
+    second: InkWarrior-run-v1_3
+  - first:
+      213: -9089392516936365184
+    second: InkWarrior-run-v1_4
+  - first:
+      213: -2606775164248040567
+    second: InkWarrior-run-v1_5
+  - first:
+      213: 7199998742399282002
+    second: InkWarrior-run-v1_6
+  - first:
+      213: -5711641324829968811
+    second: InkWarrior-run-v1_7
+  - first:
+      213: -2777551125777122167
+    second: InkWarrior-run-v1_8
+  - first:
+      213: 6163948298648399095
+    second: InkWarrior-run-v1_9
+  - first:
+      213: 4275700248435986652
+    second: InkWarrior-run-v1_10
+  - first:
+      213: -664836775476309204
+    second: InkWarrior-run-v1_11
+  - first:
+      213: 4805258192856495989
+    second: InkWarrior-run-v1_12
+  - first:
+      213: 4003628946853589820
+    second: InkWarrior-run-v1_13
+  - first:
+      213: 7051962242164162722
+    second: InkWarrior-run-v1_14
+  - first:
+      213: -786686209396597515
+    second: InkWarrior-run-v1_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_0
+      rect:
+        serializedVersion: 2
+        x: 55
+        y: 821
+        width: 131
+        height: 155
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cc65c45c70c3da20800000000000000
+      internalID: 3086021809909624009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_1
+      rect:
+        serializedVersion: 2
+        x: 300
+        y: 831
+        width: 146
+        height: 147
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a274816b1e9cfa70800000000000000
+      internalID: 8862132007195669156
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_2
+      rect:
+        serializedVersion: 2
+        x: 557
+        y: 826
+        width: 144
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 644fd6f989adbf4d0800000000000000
+      internalID: -3099643569469787066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_3
+      rect:
+        serializedVersion: 2
+        x: 825
+        y: 822
+        width: 131
+        height: 150
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fae9aee41114b740800000000000000
+      internalID: 5166773454101932785
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_4
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 573
+        width: 148
+        height: 156
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08b0aebd9adfbd180800000000000000
+      internalID: -9089392516936365184
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_5
+      rect:
+        serializedVersion: 2
+        x: 321
+        y: 565
+        width: 122
+        height: 148
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98b5fa5accfd2dbd0800000000000000
+      internalID: -2606775164248040567
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_6
+      rect:
+        serializedVersion: 2
+        x: 557
+        y: 574
+        width: 145
+        height: 152
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25be7ff75b88be360800000000000000
+      internalID: 7199998742399282002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_7
+      rect:
+        serializedVersion: 2
+        x: 834
+        y: 566
+        width: 121
+        height: 146
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55671150a7c2cb0b0800000000000000
+      internalID: -5711641324829968811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_8
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 324
+        width: 148
+        height: 144
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98c719a97f72479d0800000000000000
+      internalID: -2777551125777122167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_9
+      rect:
+        serializedVersion: 2
+        x: 305
+        y: 309
+        width: 138
+        height: 158
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fcafc2d15eba8550800000000000000
+      internalID: 6163948298648399095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_10
+      rect:
+        serializedVersion: 2
+        x: 556
+        y: 323
+        width: 146
+        height: 145
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd0931ae8b6565b30800000000000000
+      internalID: 4275700248435986652
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_11
+      rect:
+        serializedVersion: 2
+        x: 813
+        y: 309
+        width: 142
+        height: 162
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c235e14a97606c6f0800000000000000
+      internalID: -664836775476309204
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_12
+      rect:
+        serializedVersion: 2
+        x: 44
+        y: 64
+        width: 145
+        height: 146
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5773f37fdd4bfa240800000000000000
+      internalID: 4805258192856495989
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_13
+      rect:
+        serializedVersion: 2
+        x: 300
+        y: 53
+        width: 143
+        height: 162
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c33fda5a05fbf8730800000000000000
+      internalID: 4003628946853589820
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_14
+      rect:
+        serializedVersion: 2
+        x: 568
+        y: 54
+        width: 133
+        height: 150
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a089addb4a9dd160800000000000000
+      internalID: 7051962242164162722
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: InkWarrior-run-v1_15
+      rect:
+        serializedVersion: 2
+        x: 812
+        y: 57
+        width: 145
+        height: 160
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5fc97338f012515f0800000000000000
+      internalID: -786686209396597515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      InkWarrior-run-v1_0: 3086021809909624009
+      InkWarrior-run-v1_1: 8862132007195669156
+      InkWarrior-run-v1_10: 4275700248435986652
+      InkWarrior-run-v1_11: -664836775476309204
+      InkWarrior-run-v1_12: 4805258192856495989
+      InkWarrior-run-v1_13: 4003628946853589820
+      InkWarrior-run-v1_14: 7051962242164162722
+      InkWarrior-run-v1_15: -786686209396597515
+      InkWarrior-run-v1_2: -3099643569469787066
+      InkWarrior-run-v1_3: 5166773454101932785
+      InkWarrior-run-v1_4: -9089392516936365184
+      InkWarrior-run-v1_5: -2606775164248040567
+      InkWarrior-run-v1_6: 7199998742399282002
+      InkWarrior-run-v1_7: -5711641324829968811
+      InkWarrior-run-v1_8: -2777551125777122167
+      InkWarrior-run-v1_9: 6163948298648399095
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
