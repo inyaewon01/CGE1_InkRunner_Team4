@@ -9,7 +9,8 @@ Unity **6000.3.23f1**에서 아래 전용 씬을 열고 **Play**를 누릅니다
 메뉴 `Tools > InkRunner > Open Black Ink Test Scene`으로도 열 수 있습니다.
 시작 후 3초 준비 시간이 지나면 기존 Inkwarrior가 오른쪽으로 계속 달립니다.
 캐릭터는 화면 왼쪽 약 8% 위치에서 출발하고, 카메라가 따라가며 앞쪽 맵을 생성합니다.
-플랫폼은 기본적으로 빈틈없이 이어져 있어 그리지 않아도 달리기를 계속 볼 수 있습니다.
+플랫폼 사이에는 **150~250px의 랜덤한 빈틈**이 있습니다.
+캐릭터가 도착하기 전에 양쪽 플랫폼의 윗면을 먹으로 연결해야 하며, 그리지 않으면 추락합니다.
 
 - **좌클릭 드래그:** 경로를 윗면으로 하는 검은 먹 플랫폼 생성. 생성한 길이에 따라 잉크 소모.
 - **Reset:** 캐릭터·먹·잉크·준비 시간을 초기화하고 같은 랜덤 순서의 맵으로 다시 시작.
@@ -21,19 +22,20 @@ Unity **6000.3.23f1**에서 아래 전용 씬을 열고 **Play**를 누릅니다
 
 ## 크기와 맵 생성 방식
 
-기본값은 **캐릭터 몸 높이 40px, 먹의 충돌 몸체 두께 25px**입니다.
+기본값은 **캐릭터 몸 높이 40px, 먹의 충돌 몸체 두께 15px**입니다.
 이는 텍스처 파일 크기가 아니라 실제 Game 뷰 렌더링 픽셀 기준입니다.
 `Lock To Screen Pixels`가 켜져 있으면 창 크기에 맞춰 카메라 범위를 조절합니다.
 Game 뷰 표시 배율이 1×가 아니면 에디터 화면에서 재는 크기는 달라질 수 있습니다.
 몸 높이는 기존 `run_01`의 머리~발바닥 약 210px를 기준으로 하며 무기·망토·여백을 제외합니다.
 애니메이션 포즈별 외곽선은 변하지만 기준 높이와 먹 두께는 고정합니다.
 
-100px = 1 월드 유닛이므로 몸은 0.4u, 먹은 0.25u입니다.
+100px = 1 월드 유닛이므로 몸은 0.4u, 먹은 0.15u입니다. 두께 비율은 `15 / 40 = 0.375`입니다.
 원본 몸 높이 2.1u에 대해 테스트 Prefab Variant만 `40 / 210` 배율로 축소합니다.
-먹의 아래 번짐과 붓털 장식은 25px 충돌 몸체 밖으로 조금 보일 수 있습니다.
+먹의 아래 번짐과 붓털 장식은 15px 충돌 몸체 밖으로 조금 보일 수 있습니다.
 
 `platform_1`~`platform_6`를 한 묶음씩 섞어 생성하며 묶음 경계에서도 같은 그림의 연속을 피합니다.
 일반 플랫폼의 보행 폭은 2.0~3.6u이고 출발 플랫폼은 안전한 출발 공간을 확보하도록 넓어질 수 있습니다.
+각 플랫폼 사이의 빈틈은 1.5~2.5u, 즉 현재 Game 뷰에서 150~250px 범위로 무작위 선택합니다.
 그림은 원래 가로세로 비율을 유지하고, 보행 윗면에 맞춰 배치합니다.
 첫 플랫폼은 비우고 이후 1~3개 플랫폼 간격으로 `obstacle_1`~`obstacle_2`가 번갈아 나타납니다.
 장애물의 보이는 높이는 기본 55~95px입니다.
@@ -49,7 +51,7 @@ Game 뷰 표시 배율이 1×가 아니면 에디터 화면에서 재는 크기�
 
 | 값 | 기본값 | 설명 |
 | --- | --- | --- |
-| Character Height Pixels / Ink Thickness Pixels | 40 / 25 | 몸 높이 / 먹 두께 |
+| Character Height Pixels / Ink Thickness Pixels | 40 / 15 | 몸 높이 / 먹 두께 |
 | Lock To Screen Pixels / Pixels Per World Unit | ON / 100 | 실제 Game 뷰 픽셀 유지 / 월드 환산 |
 | Reference Pixel Height | 1080 | 픽셀 고정을 끌 때 사용하는 기준 화면 높이 |
 | Runner Viewport X / Ground Viewport Y | 0.08 / 0.27 | 왼쪽부터 캐릭터 위치 / 아래부터 지면 위치 |
@@ -64,14 +66,14 @@ Game 뷰 표시 배율이 1×가 아니면 에디터 화면에서 재는 크기�
 | 값 | 기본값 | 설명 |
 | --- | --- | --- |
 | Minimum / Maximum Platform Width | 2 / 3.6 | 플랫폼 보행 폭 범위(u) |
-| Platform Gap | 0 | 플랫폼 사이 간격(u). 늘리면 먹 다리 테스트 가능 |
+| Minimum Platform Gap / Maximum Platform Gap | 1.5 / 2.5 | 플랫폼 사이 랜덤 간격(u). 화면 기준 150~250px |
 | Generate Ahead Distance / Cleanup Behind Distance | 6 / 4 | 카메라 앞 생성 거리 / 뒤 정리 여유(u) |
 | Maximum Active Platforms / Random Seed | 32 / 27102026 | 활성 플랫폼 상한 / 재현용 시드 |
 | Minimum / Maximum Platforms Between Obstacles | 1 / 3 | 장식 배치 간격 |
 | Minimum / Maximum Obstacle Height | 0.55 / 0.95 | 보이는 장식 높이(u) |
 
-무한 모드의 플랫폼 간격은 **World의 Platform Gap**으로 바꿉니다.
-Controller의 동명 필드는 예전 두 플랫폼 모드용입니다. 조정값을 남기려면 Play를 종료한 상태에서 값을 바꾸고 씬을 저장하세요.
+무한 모드의 플랫폼 간격은 **World의 Minimum Platform Gap / Maximum Platform Gap**으로 바꿉니다.
+Controller의 `Platform Gap` 필드는 예전 두 플랫폼 모드용입니다. 조정값을 남기려면 Play를 종료한 상태에서 값을 바꾸고 씬을 저장하세요.
 
 ## 파일 위치와 보존 범위
 
@@ -104,7 +106,12 @@ UI 위 입력, 캐릭터·금지 영역과 겹치는 두꺼운 몸체, 급경사
 메뉴 `Tools > InkRunner > Validate Endless Ink Runner (Play Mode)`로 재검증합니다.
 예전 `Validate Black Ink Prototype (Play Mode)` 메뉴도 같은 새 검증을 실행합니다.
 결과와 화면은 `Logs/EndlessInkValidationResults/`에 저장되며 최신 결과는 `ValidationResults.md`를 확인하세요.
-2026-10-27 실제 Unity 검증은 **32개 모두 PASS**이며, 시뮬레이션 120초 동안 200u 이상 달리기를 확인했습니다.
-상세 자동 기록: [EndlessInkValidationReport.md](Documentation/EndlessInkValidationReport.md)
+2026-10-27의 최신 검증은 동일 소스의 격리 복사본에서 실제 Unity로 실행해 **41개 모두 PASS**했습니다.
+랜덤 빈틈 150~250px의 범위·다양성·Reset 재현, 먹 없이 추락, 그린 15px 먹 다리의 실제 횡단을 확인했습니다.
+장시간 120초·200u 이상 달리기는 **Editor 검증 코드의 입력 다리 46개·명시적 Refill 11회**로 보조했습니다.
+일반 Play에는 자동 다리·자동 Refill이 없습니다. 원본 프로젝트가 열려 있어 `Logs/RandomGapValidationProject/` 복사본에서 검증했습니다.
+상세 자동 기록: [RandomGapInkValidationReport.md](Documentation/RandomGapInkValidationReport.md)
+검색 인덱서의 Editor 환경 예외는 원본 보고서에 별도 기록했으며 프로토타입 런타임 오류는 없었습니다.
+기존 [32개 통과 기록](Documentation/EndlessInkValidationReport.md)은 간격 0u·먹 25px 버전의 결과로 유지합니다.
 2026-10-20의 32개 통과 기록과 기존 스크린샷은 이전 두 플랫폼 버전의 기록이며 현재 씬의 검증 결과가 아닙니다.
 공용 씬 통합, 장애물 충돌, 점프·흰 먹·잉크 자동 회복 및 별도 Player 빌드는 이번 변경 범위 밖입니다.

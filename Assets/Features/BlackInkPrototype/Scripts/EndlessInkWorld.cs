@@ -14,11 +14,13 @@ namespace InkRunner.BlackInkPrototype
         public Sprite[] obstacleSprites = new Sprite[2];
         public Material spriteMaterial;
 
-        [Header("Continuous running preview")]
+        [Header("Platform dimensions (100 screen pixels = 1 world unit)")]
         [Min(0.5f)] public float minimumPlatformWidth = 2.0f;
         [Min(0.5f)] public float maximumPlatformWidth = 3.6f;
-        [Tooltip("Zero gives an uninterrupted run. Increase this to test drawing ink bridges.")]
-        [Range(0f, 1f)] public float platformGap;
+        [Tooltip("Minimum clear distance between walking edges. 1.5 units = 150 pixels at the test scene's 100 PPU.")]
+        [Min(0f)] public float minimumPlatformGap = 1.5f;
+        [Tooltip("Maximum clear distance between walking edges. Each gap is sampled independently; 2.5 units = 250 pixels.")]
+        [Min(0f)] public float maximumPlatformGap = 2.5f;
         [Min(1f)] public float generateAheadDistance = 6f;
         [Min(1f)] public float cleanupBehindDistance = 4f;
         [Min(8)] public int maximumActivePlatforms = 32;
@@ -78,7 +80,7 @@ namespace InkRunner.BlackInkPrototype
         private PhysicsMaterial2D groundMaterial;
         private System.Random random;
         private Vector2 spawnPoint;
-        private float nextLeft;
+        private float nextLeft, previousGap;
         private int platformsUntilObstacle, nextObstacleVariant, previousPlatformVariant = -1;
 
         public void Initialize(Camera camera, Rigidbody2D character, PhysicsMaterial2D material)
@@ -99,6 +101,7 @@ namespace InkRunner.BlackInkPrototype
             TotalPlatformsCreated = ActiveObstacleCount = 0;
             VisibleVariantsMask = ObstacleVariantsMask = 0;
             platformsUntilObstacle = 2;
+            previousGap = 0f;
             nextObstacleVariant = random.Next(Mathf.Max(1, obstacleSprites.Length));
             float left = worldCamera ? CameraEdge(0f) : bodyFoot.x - 2f;
             nextLeft = Mathf.Min(left - 1f, bodyFoot.x - 0.75f);
@@ -149,6 +152,8 @@ namespace InkRunner.BlackInkPrototype
                 Mathf.Max(minimumPlatformWidth, maximumPlatformWidth));
             // Give the spawn area a generous uninterrupted first platform.
             if (TotalPlatformsCreated == 0) width = Mathf.Max(width, spawnPoint.x - nextLeft + 1.5f);
+            float gapAfter = RandomRange(Mathf.Max(0f, minimumPlatformGap),
+                Mathf.Max(Mathf.Max(0f, minimumPlatformGap), maximumPlatformGap));
             GameObject platformObject = new GameObject($"Platform {TotalPlatformsCreated + 1:0000} - platform_{variant + 1}");
             platformObject.transform.SetParent(generatedRoot, false);
             platformObject.transform.position = new Vector3(nextLeft, spawnPoint.y, transform.position.z);
@@ -159,8 +164,8 @@ namespace InkRunner.BlackInkPrototype
             surface.points = new[] { Vector2.zero, new Vector2(width, 0f) };
             surface.sharedMaterial = groundMaterial;
             surface.edgeRadius = 0f;
-            surface.useAdjacentStartPoint = platformGap <= 0.0001f;
-            surface.useAdjacentEndPoint = platformGap <= 0.0001f;
+            surface.useAdjacentStartPoint = TotalPlatformsCreated > 0 && previousGap <= 0.0001f;
+            surface.useAdjacentEndPoint = gapAfter <= 0.0001f;
             surface.adjacentStartPoint = new Vector2(-1f, 0f);
             surface.adjacentEndPoint = new Vector2(width + 1f, 0f);
 
@@ -190,7 +195,8 @@ namespace InkRunner.BlackInkPrototype
             }
             platforms.Add(platform);
             TotalPlatformsCreated++;
-            nextLeft = platform.right + Mathf.Max(0f, platformGap);
+            nextLeft = platform.right + gapAfter;
+            previousGap = gapAfter;
         }
 
         private bool CreateObstacle(Transform platform, float platformWidth)
@@ -278,6 +284,8 @@ namespace InkRunner.BlackInkPrototype
         {
             minimumPlatformWidth = Mathf.Max(0.5f, minimumPlatformWidth);
             maximumPlatformWidth = Mathf.Max(minimumPlatformWidth, maximumPlatformWidth);
+            minimumPlatformGap = Mathf.Max(0f, minimumPlatformGap);
+            maximumPlatformGap = Mathf.Max(minimumPlatformGap, maximumPlatformGap);
             maximumActivePlatforms = Mathf.Max(8, maximumActivePlatforms);
             maximumPlatformsBetweenObstacles = Mathf.Max(minimumPlatformsBetweenObstacles, maximumPlatformsBetweenObstacles);
             maximumObstacleHeight = Mathf.Max(minimumObstacleHeight, maximumObstacleHeight);

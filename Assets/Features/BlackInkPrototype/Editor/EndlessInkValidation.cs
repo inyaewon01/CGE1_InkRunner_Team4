@@ -120,13 +120,13 @@ namespace InkRunner.BlackInkPrototype.Editor
             var world = test.endlessWorld;
 
             Check(test.lockToScreenPixels && Near(test.pixelsPerWorldUnit, 100f) &&
-                Near(test.characterBodyHeight, 0.4f) && Near(test.Thickness, 0.25f),
-                "40 px character body and 25 px ink map to 0.40 / 0.25 world units at 100 px per unit");
+                Near(test.characterBodyHeight, 0.4f) && Near(test.Thickness, 0.15f),
+                "40 px character body and 15 px ink map to 0.40 / 0.15 world units at 100 px per unit");
             Check(Near(test.character.transform.localScale.y, 40f / 210f, 0.0001f),
                 "Only the prototype variant uses the 40 / 210 character scale");
             Check(Near(ProjectedHeight(test.drawingCamera, test.characterBodyHeight), 40f, 0.05f) &&
-                Near(ProjectedHeight(test.drawingCamera, test.Thickness), 25f, 0.05f),
-                "Current Game view actually projects the body to 40 px and the ink to 25 px");
+                Near(ProjectedHeight(test.drawingCamera, test.Thickness), 15f, 0.05f),
+                "Current Game view actually projects the body to 40 px and the ink to 15 px");
             Check(Near(test.drawingCamera.WorldToViewportPoint(test.characterBody.bounds.center).x,
                 test.runnerViewportX, 0.005f) && test.runnerViewportX <= 0.1f,
                 "Runner begins near the left screen edge (8 percent viewport X)");
@@ -137,6 +137,34 @@ namespace InkRunner.BlackInkPrototype.Editor
                 "Initial random platforms cover the visible area with bounded live objects");
             Check(test.inkRoot.parent == null || !test.inkRoot.IsChildOf(test.character.transform),
                 "Ink is stored in stationary world space independently of the runner");
+
+            Check(Near(world.minimumPlatformGap, 1.5f) && Near(world.maximumPlatformGap, 2.5f),
+                "Default platform gaps are configured for 150 through 250 screen pixels");
+            // Widen generation only in this fixture to inspect a useful sample without
+            // moving the real runner. Restoring the setting and Reset leave no test tiles.
+            float normalAheadDistance = world.generateAheadDistance;
+            world.generateAheadDistance = 35f;
+            test.ResetTrial();
+            Release(test);
+            Vector2[] initialEdges = PlatformSpans(world);
+            float[] gapSample = GapWidths(initialEdges);
+            Check(gapSample.Length >= 6 && gapSample.All(gap => gap >= 1.5f - 0.002f && gap <= 2.5f + 0.002f) &&
+                gapSample.All(gap => ProjectedHeight(test.drawingCamera, gap) >= 149.8f &&
+                    ProjectedHeight(test.drawingCamera, gap) <= 250.2f),
+                "Generated walking-surface gaps measure 150 through 250 px, including the first gap");
+            Check(gapSample.Max() - gapSample.Min() > 0.1f,
+                "Separate platform gaps vary randomly instead of sharing a fixed distance");
+            Check(EmptyGapCenters(initialEdges),
+                "Gap centers contain no invisible ground Collider2D beneath the walking plane");
+            test.ResetTrial();
+            Release(test);
+            Vector2[] repeatedEdges = PlatformSpans(world);
+            Check(initialEdges.Length == repeatedEdges.Length && initialEdges.Zip(repeatedEdges,
+                (a, b) => Near(a.x, b.x) && Near(a.y, b.y)).All(equal => equal),
+                "Reset reproduces the same random platform positions and gap widths for the saved seed");
+            world.generateAheadDistance = normalAheadDistance;
+            test.ResetTrial();
+            Release(test);
 
             Vector2 first = new Vector2(spawn.x + 2f, 1f);
             Vector2 last = first + Vector2.right * 3.6f;
@@ -153,8 +181,8 @@ namespace InkRunner.BlackInkPrototype.Editor
             InkStrokeGeometry geometry = test.inkRoot.GetComponentInChildren<InkStrokeGeometry>();
             PolygonCollider2D inkCollider = geometry.GetComponent<PolygonCollider2D>();
             Check(inkCollider.enabled && Near(inkCollider.bounds.max.y, first.y) &&
-                Near(inkCollider.bounds.size.y, 0.25f),
-                "Ink has a continuous 25 px collision body extending down from the pointer path");
+                Near(inkCollider.bounds.size.y, 0.15f),
+                "Ink has a continuous 15 px collision body extending down from the pointer path");
             Check(geometry.GetComponent<MeshRenderer>().sharedMaterial != null &&
                 geometry.GetComponent<MeshFilter>().sharedMesh.vertexCount > geometry.PointCount * 2,
                 "Generated ink keeps the brush material and feathered mesh");
@@ -183,6 +211,47 @@ namespace InkRunner.BlackInkPrototype.Editor
             Check(test.StrokeCount == 0 && test.inkRoot.childCount == 0 && Near(test.CurrentInk, 100f),
                 "Reset removes generated ink and restores the ink budget");
 
+            // The default map is intentionally unbridged. Verify real gravity rather
+            // than inferring a fall only from the absence of a collider in a raycast.
+            test.preparationSeconds = 0f;
+            test.ResetTrial();
+            Release(test);
+            EdgeCollider2D[] firstPlatforms = PlatformEdges(world);
+            float firstGapLeft = firstPlatforms[0].bounds.max.x;
+            CaptureFrame(test, Path.Combine(Output, "EndlessInk_Gaps150-250px.png"));
+            Time.timeScale = 3f;
+            float fallLimit = Time.realtimeSinceStartup + 15f;
+            while (test.State != BlackInkTestController.TrialState.Failed && Time.realtimeSinceStartup < fallLimit)
+                yield return null;
+            Check(test.State == BlackInkTestController.TrialState.Failed &&
+                test.character.position.x > firstGapLeft && test.StrokeCount == 0,
+                "Without drawn ink the actual runner leaves the first default gap and falls");
+            CaptureFrame(test, Path.Combine(Output, "EndlessInk_GapFallen.png"));
+
+            // Draw through the same public pointer seam as a player. No production
+            // script supplies a hidden bridge or automatic refill.
+            Time.timeScale = 1f;
+            test.ResetTrial();
+            Release(test);
+            firstPlatforms = PlatformEdges(world);
+            EdgeCollider2D arrival = firstPlatforms[1];
+            Vector2 bridgeA = new Vector2(firstPlatforms[0].bounds.max.x - 0.12f, 0f);
+            Vector2 bridgeB = new Vector2(arrival.bounds.min.x + 0.12f, 0f);
+            Draw(test, new[] { bridgeA, bridgeB }, 20);
+            Check(test.StrokeCount == 1 && Near(test.CreatedLength, bridgeB.x - bridgeA.x),
+                "Player pointer input can draw a 15 px bridge across the first actual random gap");
+            CaptureFrame(test, Path.Combine(Output, "EndlessInk_Drawing15px.png"));
+            float crossingLimit = Time.realtimeSinceStartup + 15f;
+            while (test.State != BlackInkTestController.TrialState.Failed &&
+                   (test.characterBody.bounds.center.x < arrival.bounds.min.x + 0.4f ||
+                    !test.characterBody.IsTouching(arrival)) && Time.realtimeSinceStartup < crossingLimit)
+                yield return null;
+            Check(test.State == BlackInkTestController.TrialState.Running &&
+                test.characterBody.bounds.center.x > arrival.bounds.min.x + 0.3f &&
+                test.characterBody.IsTouching(arrival),
+                "Actual Physics2D runner crosses the drawn 15 px ink and reaches the next stone platform");
+            CaptureFrame(test, Path.Combine(Output, "EndlessInk_GapCrossed.png"));
+
             // This upper stroke does not touch the runner. Its world mesh/collision must
             // remain fixed while the camera follows the actual simulated run.
             test.preparationSeconds = 0f;
@@ -195,20 +264,28 @@ namespace InkRunner.BlackInkPrototype.Editor
             Vector3[] initialVertices = mesh.vertices;
             Vector2[] initialCollision = geometry.GetComponent<PolygonCollider2D>().GetPath(0);
             Vector3 inkWorldPosition = geometry.transform.position;
-            CaptureFrame(test, Path.Combine(Output, "EndlessInk_Drawing25px.png"));
             test.SendMessage("OnApplicationFocus", true);
-            Time.timeScale = 6f;
+            var bridgedPlatforms = new HashSet<int>();
+            int validationRefills = 0;
+            BridgeVisibleGaps(test, bridgedPlatforms, ref validationRefills);
+            // Three times normal speed keeps every new visible gap paintable ahead of
+            // the body, even when a hidden Editor frame consumes its maximum time budget.
+            Time.timeScale = 3f;
             // FixedUpdate precedes Update. The first frame can spend its entire physics
             // budget in Preparing and only enter Running afterwards. Measure once a real
             // running physics step has happened, rather than timing that transition frame.
             float readyLimit = Time.realtimeSinceStartup + 15f;
             while ((test.State != BlackInkTestController.TrialState.Running || test.character.linearVelocity.x < 0.1f) &&
-                   Time.realtimeSinceStartup < readyLimit) yield return null;
+                   Time.realtimeSinceStartup < readyLimit)
+            {
+                BridgeVisibleGaps(test, bridgedPlatforms, ref validationRefills);
+                yield return null;
+            }
             float motionCameraX = test.drawingCamera.transform.position.x;
             float motionCharacterX = test.character.position.x;
             float runStart = Time.time;
-            float realLimit = Time.realtimeSinceStartup + 90f;
-            pointer = Screen(test, new Vector2(spawn.x + 8f, 1.6f));
+            float realLimit = Time.realtimeSinceStartup + 130f;
+            pointer = new Vector2(UnityEngine.Screen.width * 0.65f, UnityEngine.Screen.height * 0.55f);
             test.ProcessPointer(pointer, true, true, false);
             float inkBeforeHold = test.CurrentInk;
             float lengthBeforeHold = test.CreatedLength;
@@ -236,8 +313,9 @@ namespace InkRunner.BlackInkPrototype.Editor
             while (Time.time - runStart < 120f && Time.realtimeSinceStartup < realLimit)
             {
                 if (test.State == BlackInkTestController.TrialState.Failed)
-                    throw new InvalidOperationException("Runner fell during the continuous 120-second seam test at " +
+                    throw new InvalidOperationException("Runner fell during the 120-second drawn-bridge test at " +
                         test.character.position + ", elapsed=" + (Time.time - runStart));
+                BridgeVisibleGaps(test, bridgedPlatforms, ref validationRefills);
                 platformMask |= world.VisibleVariantsMask;
                 obstacleMask |= world.ObstacleVariantsMask;
                 maximumLivePlatforms = Mathf.Max(maximumLivePlatforms, world.ActivePlatformCount);
@@ -252,30 +330,34 @@ namespace InkRunner.BlackInkPrototype.Editor
                 }
                 if (!captured10 && Time.time - runStart >= 10f)
                 {
-                    CaptureFrame(test, Path.Combine(Output, "EndlessInk_10seconds.png"));
+                    CaptureFrame(test, Path.Combine(Output, "EndlessInk_GapRun10seconds.png"));
                     captured10 = true;
                 }
                 if (!captured60 && Time.time - runStart >= 60f)
                 {
-                    CaptureFrame(test, Path.Combine(Output, "EndlessInk_60seconds.png"));
+                    CaptureFrame(test, Path.Combine(Output, "EndlessInk_GapRun60seconds.png"));
                     captured60 = true;
                 }
                 yield return null;
             }
             Check(Time.time - runStart >= 120f && test.State == BlackInkTestController.TrialState.Running,
-                "Actual Physics2D runner crosses random platform seams for 120 simulated seconds without completing or falling");
+                "Actual Physics2D runner crosses pointer-drawn random-gap bridges for 120 simulated seconds without completing or falling");
             Check(test.character.position.x > spawn.x + 200f && world.TotalPlatformsCreated > initialTotal + 30,
                 "The map continuously generates ahead beyond 200 world units of actual travel");
             Check(platformMask == 0x3f && obstacleMask == 0x3,
                 "The long run visibly generates every platform_1 through platform_6 and both obstacle variants");
+            Check(bridgedPlatforms.Count > 30 && validationRefills > 0,
+                $"Editor-only pointer input draws many real bridges with explicit refills (bridges={bridgedPlatforms.Count}, refills={validationRefills})");
             Check(maximumLivePlatforms <= world.maximumActivePlatforms && maximumLiveObstacles <= maximumLivePlatforms,
                 $"Offscreen world recycling bounds live platforms / obstacles (observed {maximumLivePlatforms} / {maximumLiveObstacles})");
             Check(obstacleCollisionFree && maximumLiveObstacles > 0,
                 "Intermittent obstacle sprites have no Collider2D or Rigidbody2D hit detection");
             Check(runnerStayedLeft, "Runner remains near the left screen edge while the world scrolls");
-            Check(captured10 && captured60 && File.Exists(Path.Combine(Output, "EndlessInk_60seconds.png")),
+            Check(captured10 && captured60 && File.Exists(Path.Combine(Output, "EndlessInk_GapRun60seconds.png")),
                 "Saved real 1920 x 1080 Unity URP renders at 10 and 60 simulated seconds");
-            Check(test.StrokeCount == 0, "Painted ink entirely behind the camera is cleaned up during the long run");
+            Check(!geometry && test.StrokeCount < bridgedPlatforms.Count && test.StrokeCount <= test.maximumStrokes &&
+                test.PointCount <= test.maximumPoints,
+                "Old ink behind the camera is removed while current bridges stay within the storage limits");
 
             test.preparationSeconds = 3f;
             test.ResetTrial();
@@ -312,6 +394,71 @@ namespace InkRunner.BlackInkPrototype.Editor
             Vector3 origin = camera.transform.position + Vector3.forward * 10f;
             return Mathf.Abs(camera.WorldToScreenPoint(origin + Vector3.up * worldHeight).y -
                 camera.WorldToScreenPoint(origin).y);
+        }
+
+        private static EdgeCollider2D[] PlatformEdges(EndlessInkWorld world) =>
+            world.GetComponentsInChildren<EdgeCollider2D>().Where(edge => edge.enabled && edge.gameObject.activeInHierarchy)
+                .OrderBy(edge => edge.bounds.min.x).ToArray();
+
+        private static Vector2[] PlatformSpans(EndlessInkWorld world) => PlatformEdges(world)
+            .Select(edge => new Vector2(edge.bounds.min.x, edge.bounds.max.x)).ToArray();
+
+        private static float[] GapWidths(Vector2[] spans)
+        {
+            var widths = new float[Mathf.Max(0, spans.Length - 1)];
+            for (int i = 0; i < widths.Length; i++) widths[i] = spans[i + 1].x - spans[i].y;
+            return widths;
+        }
+
+        private static bool EmptyGapCenters(Vector2[] spans)
+        {
+            for (int i = 0; i < spans.Length - 1; i++)
+            {
+                float center = (spans[i].y + spans[i + 1].x) * 0.5f;
+                if (Physics2D.Raycast(new Vector2(center, 0.5f), Vector2.down, 1f).collider) return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// This fixture is Editor-only. It exercises the player's public drawing input
+        /// and refill action; the shipped runner/world never supplies automatic ink.
+        /// </summary>
+        private static void BridgeVisibleGaps(BlackInkTestController test, HashSet<int> bridgedPlatforms, ref int refills)
+        {
+            EdgeCollider2D[] edges = PlatformEdges(test.endlessWorld);
+            float right = test.drawingCamera.ViewportToWorldPoint(new Vector3(1f, 0.5f, 10f)).x;
+            for (int i = 0; i < edges.Length - 1; i++)
+            {
+                EdgeCollider2D leftPlatform = edges[i];
+                int key = leftPlatform.GetInstanceID();
+                if (bridgedPlatforms.Contains(key)) continue;
+                float gapLeft = leftPlatform.bounds.max.x, gapRight = edges[i + 1].bounds.min.x;
+                if (gapRight < test.characterBody.bounds.min.x) continue;
+                Vector2 a = new Vector2(gapLeft - 0.12f, leftPlatform.bounds.center.y);
+                Vector2 b = new Vector2(gapRight + 0.12f, edges[i + 1].bounds.center.y);
+                // A hidden batch Game view can be only 640 px wide. Complete each
+                // bridge strictly inside its actual view; screenshots are wider only.
+                if (b.x >= right - 0.05f) continue;
+                if (a.x <= test.characterBody.bounds.max.x + 0.04f)
+                    throw new InvalidOperationException("Validation pointer reached an unbridged gap too late: runner=" +
+                        test.character.position + ", gap=" + gapLeft + ".." + gapRight + ", cameraRight=" + right);
+                float requiredInk = Vector2.Distance(a, b) * test.costPerUnit;
+                if (test.CurrentInk < requiredInk + 0.5f)
+                {
+                    test.Refill();
+                    refills++;
+                }
+                Release(test);
+                float previousLength = test.CreatedLength;
+                Draw(test, new[] { a, b }, 24);
+                float actualLength = test.CreatedLength - previousLength;
+                if (!Near(actualLength, Vector2.Distance(a, b), 0.02f))
+                    throw new InvalidOperationException("Validation pointer could not paint the complete visible gap: " +
+                        a + ".." + b + ", actualLength=" + actualLength + ", screen=" +
+                        UnityEngine.Screen.width + "x" + UnityEngine.Screen.height);
+                bridgedPlatforms.Add(key);
+            }
         }
 
         private static Vector2 Screen(BlackInkTestController test, Vector2 world) => test.drawingCamera.WorldToScreenPoint(world);

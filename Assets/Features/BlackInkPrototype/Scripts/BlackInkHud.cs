@@ -72,7 +72,7 @@ namespace InkRunner.BlackInkPrototype
                 new Vector2(462f, 111f), new Vector2(1f, 1f));
             Label("RUN AND DRAW INK", instructions, new Vector2(18f, 12f), new Vector2(426f, 25f),
                 18f, Red, FontStyles.Bold);
-            Label("Left drag: draw the TOP of an ink platform.\nContinuous ground; obstacles are visual only.\nRefill restores ink. Reset starts a fresh run.",
+            Label("Left drag: draw ink bridges across the gaps.\nObstacles are visual only. Refill restores ink.\nReset starts a fresh run.",
                 instructions, new Vector2(18f, 43f), new Vector2(426f, 58f), 16f, Ink);
 
             var status = Panel("Run status", canvasObject.transform, new Vector2(0f, -22f),

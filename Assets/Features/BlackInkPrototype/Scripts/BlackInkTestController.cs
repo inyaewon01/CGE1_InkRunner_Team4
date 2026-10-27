@@ -27,7 +27,7 @@ namespace InkRunner.BlackInkPrototype
         [Min(1f)] public float pixelsPerWorldUnit = 100f;
         [Min(1f)] public float referencePixelHeight = 1080f;
         [Min(1f)] public float characterHeightPixels = 40f;
-        [Min(1f)] public float inkThicknessPixels = 25f;
+        [Min(1f)] public float inkThicknessPixels = 15f;
         [Min(0.1f)] public float originalCharacterBodyHeight = 2.10f;
         [Range(0.03f, 0.4f)] public float runnerViewportX = 0.08f;
         [Range(0.15f, 0.55f)] public float groundViewportY = 0.27f;
@@ -44,7 +44,7 @@ namespace InkRunner.BlackInkPrototype
         [Header("Trial")]
         [Min(0f)] public float preparationSeconds = 3f;
         [Min(0.1f)] public float runSpeed = 1.8f;
-        [Tooltip("Legacy two-platform trial only. In endless mode use EndlessInkWorld.Platform Gap.")]
+        [Tooltip("Legacy two-platform trial only. In endless mode use EndlessInkWorld Minimum / Maximum Platform Gap.")]
         [Min(0f)] public float platformGap = 3f;
         [Range(5f, 45f)] public float maximumSlope = 35f;
         public float failureY = -5f;
@@ -411,7 +411,7 @@ namespace InkRunner.BlackInkPrototype
                 characterAnimator.Update(0f);
                 characterAnimator.speed = 0f;
             }
-            feedback = endlessMode ? "Continuous terrain / decorative obstacles. Left drag draws 25 px ink; Refill adds ink." :
+            feedback = endlessMode ? $"Bridge the random gaps with {inkThicknessPixels:0} px ink. Obstacles are visual only." :
                 "Draw a bridge along y = 0. The mouse path is the platform TOP.";
             Physics2D.SyncTransforms();
             UpdateHud();

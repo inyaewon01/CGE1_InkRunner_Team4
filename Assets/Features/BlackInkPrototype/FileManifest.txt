@@ -1,12 +1,14 @@
 Commit this entire feature and every .meta listed below.
 No common scene, settings, package or character original was edited.
-Files: 91
+Files: 105
 
 Assets/Features.meta
 Assets/Features/BlackInkPrototype.meta
 Assets/Features/BlackInkPrototype/Documentation.meta
 Assets/Features/BlackInkPrototype/Documentation/EndlessInkValidationReport.md
 Assets/Features/BlackInkPrototype/Documentation/EndlessInkValidationReport.md.meta
+Assets/Features/BlackInkPrototype/Documentation/RandomGapInkValidationReport.md
+Assets/Features/BlackInkPrototype/Documentation/RandomGapInkValidationReport.md.meta
 Assets/Features/BlackInkPrototype/Documentation/UnityValidationReport.md
 Assets/Features/BlackInkPrototype/Documentation/UnityValidationReport.md.meta
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots.meta
@@ -22,8 +24,20 @@ Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_10seconds.png.meta
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_60seconds.png
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_60seconds.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_Drawing15px.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_Drawing15px.png.meta
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_Drawing25px.png
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_Drawing25px.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_GapCrossed.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_GapCrossed.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_GapFallen.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_GapFallen.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_GapRun10seconds.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_GapRun10seconds.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_GapRun60seconds.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_GapRun60seconds.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_Gaps150-250px.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_Gaps150-250px.png.meta
 Assets/Features/BlackInkPrototype/Editor.meta
 Assets/Features/BlackInkPrototype/Editor/BlackInkSceneBuilder.cs
 Assets/Features/BlackInkPrototype/Editor/BlackInkSceneBuilder.cs.meta

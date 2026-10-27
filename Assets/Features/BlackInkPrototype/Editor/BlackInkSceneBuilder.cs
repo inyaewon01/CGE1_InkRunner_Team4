@@ -64,7 +64,7 @@ namespace InkRunner.BlackInkPrototype.Editor
                 Camera camera = cameraObject.GetComponent<Camera>();
                 camera.orthographic = true;
                 // 100 world pixels per unit: the 1080-high reference view spans 10.8 units.
-                // Runtime tracks the current Game view height to keep 40 px / 25 px literal.
+                // Runtime tracks the current Game view height to keep 40 px / 15 px literal.
                 camera.orthographicSize = 5.4f;
                 camera.clearFlags = CameraClearFlags.SolidColor;
                 camera.backgroundColor = new Color(0.95f, 0.935f, 0.89f);
@@ -81,6 +81,8 @@ namespace InkRunner.BlackInkPrototype.Editor
                 world.platformSprites = platformSprites;
                 world.obstacleSprites = obstacleSprites;
                 world.spriteMaterial = spriteMaterial;
+                world.minimumPlatformGap = 1.5f;
+                world.maximumPlatformGap = 2.5f;
                 var inkRoot = new GameObject("Generated Black Ink (runtime only)");
 
                 // Saving an instantiated source prefab creates a variant and preserves sprite/controller links.
@@ -125,10 +127,10 @@ namespace InkRunner.BlackInkPrototype.Editor
                 controller.pixelsPerWorldUnit = 100f;
                 controller.referencePixelHeight = 1080f;
                 controller.characterHeightPixels = 40f;
-                controller.inkThicknessPixels = 25f;
+                controller.inkThicknessPixels = 15f;
                 controller.originalCharacterBodyHeight = 2.1f;
                 controller.characterBodyHeight = 0.4f;
-                controller.thicknessRatio = 0.625f;
+                controller.thicknessRatio = 0.375f;
                 controller.runnerViewportX = 0.08f;
                 controller.textureScale = 0.15f;
                 controller.platformGap = 0f;
@@ -142,7 +144,7 @@ namespace InkRunner.BlackInkPrototype.Editor
                 if (!EditorSceneManager.SaveScene(scene, ScenePath))
                     throw new IOException("Unable to save the generated test scene: " + ScenePath);
                 AssetDatabase.SaveAssets();
-                Debug.Log("Created endless runner test scene (40 px character / 25 px ink): " + ScenePath);
+                Debug.Log("Created endless runner test scene (40 px character / 15 px ink / random 150-250 px gaps): " + ScenePath);
             }
             finally
             {
