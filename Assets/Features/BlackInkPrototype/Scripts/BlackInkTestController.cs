@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 
 namespace InkRunner.BlackInkPrototype
 {
-    /// <summary>Isolated prototype: static terrain, one auto-running original Inkwarrior, black ink only.</summary>
+    /// <summary>Black ink drawing plus a camera-following endless preview of the original Inkwarrior.</summary>
     public sealed class BlackInkTestController : MonoBehaviour
     {
         [Header("Scene references (test scene only)")]
@@ -20,6 +20,18 @@ namespace InkRunner.BlackInkPrototype
         public PhysicsMaterial2D surfaceMaterial;
         public Texture2D gaugeSource;
 
+        [Header("Endless runner / actual Game-view pixels")]
+        public bool endlessMode = true;
+        public EndlessInkWorld endlessWorld;
+        public bool lockToScreenPixels = true;
+        [Min(1f)] public float pixelsPerWorldUnit = 100f;
+        [Min(1f)] public float referencePixelHeight = 1080f;
+        [Min(1f)] public float characterHeightPixels = 40f;
+        [Min(1f)] public float inkThicknessPixels = 25f;
+        [Min(0.1f)] public float originalCharacterBodyHeight = 2.10f;
+        [Range(0.03f, 0.4f)] public float runnerViewportX = 0.08f;
+        [Range(0.15f, 0.55f)] public float groundViewportY = 0.27f;
+
         [Header("Ink / measured reference pose")]
         [Min(0.01f)] public float maximumInk = 100f;
         [Min(0.01f)] public float costPerUnit = 10f;
@@ -32,7 +44,8 @@ namespace InkRunner.BlackInkPrototype
         [Header("Trial")]
         [Min(0f)] public float preparationSeconds = 3f;
         [Min(0.1f)] public float runSpeed = 1.8f;
-        [Min(0.1f)] public float platformGap = 3f;
+        [Tooltip("Legacy two-platform trial only. In endless mode use EndlessInkWorld.Platform Gap.")]
+        [Min(0f)] public float platformGap = 3f;
         [Range(5f, 45f)] public float maximumSlope = 35f;
         public float failureY = -5f;
         public Rect drawingBounds = new Rect(-12f, -3f, 28f, 7.5f);
@@ -55,6 +68,9 @@ namespace InkRunner.BlackInkPrototype
         public int SegmentCount { get; private set; }
         public float CreatedLength { get; private set; }
         public float PreparationRemaining => preparationRemaining;
+        public float DistanceTravelled => Mathf.Max(0f, character.position.x - startPosition.x);
+        public float ProjectedBodyHeightPixels => characterBodyHeight * drawingCamera.pixelHeight / (2f * drawingCamera.orthographicSize);
+        public float ProjectedInkThicknessPixels => Thickness * drawingCamera.pixelHeight / (2f * drawingCamera.orthographicSize);
         [System.NonSerialized] public bool manualPointerForValidation;
 
         private readonly List<InkStrokeGeometry> strokes = new List<InkStrokeGeometry>();
@@ -77,8 +93,23 @@ namespace InkRunner.BlackInkPrototype
                 enabled = false;
                 return;
             }
+            if (endlessMode && !endlessWorld)
+            {
+                Debug.LogError("Endless world is missing. Rebuild Black Ink Test Scene from Tools > InkRunner.", this);
+                enabled = false;
+                return;
+            }
+            if (endlessMode)
+            {
+                characterBodyHeight = characterHeightPixels / pixelsPerWorldUnit;
+                thicknessRatio = inkThicknessPixels / characterHeightPixels;
+                character.transform.localScale = Vector3.one * (characterBodyHeight / originalCharacterBodyHeight);
+                Physics2D.SyncTransforms();
+                UpdateRunnerCamera();
+                endlessWorld.Initialize(drawingCamera, character, surfaceMaterial);
+            }
             startPosition = character.position;
-            if (arrivalPlatform)
+            if (!endlessMode && arrivalPlatform)
             {
                 Vector3 position = arrivalPlatform.transform.position;
                 position.x += platformGap - arrivalPlatform.bounds.min.x;
@@ -93,7 +124,7 @@ namespace InkRunner.BlackInkPrototype
 
         private void Update()
         {
-            if (!focused) return;
+            // Losing pointer focus ends painting, but must not pause the countdown or run.
             if (State == TrialState.Preparing)
             {
                 preparationRemaining = Mathf.Max(0f, preparationRemaining - Time.deltaTime);
@@ -104,7 +135,7 @@ namespace InkRunner.BlackInkPrototype
                 }
             }
             if (character.position.y < failureY && State != TrialState.Failed) Finish(TrialState.Failed);
-            if (State == TrialState.Running && arrivalPlatform &&
+            if (!endlessMode && State == TrialState.Running && arrivalPlatform &&
                 characterBody.bounds.center.x > arrivalPlatform.bounds.min.x + 0.65f &&
                 characterBody.IsTouching(arrivalPlatform)) Finish(TrialState.Complete);
 
@@ -124,13 +155,34 @@ namespace InkRunner.BlackInkPrototype
             character.linearVelocity = velocity;
         }
 
+        private void LateUpdate()
+        {
+            if (!endlessMode || !drawingCamera || !characterBody) return;
+            UpdateRunnerCamera();
+            if (endlessWorld) endlessWorld.Tick();
+        }
+
+        private void UpdateRunnerCamera()
+        {
+            float targetPixelHeight = lockToScreenPixels ? Mathf.Max(1, Screen.height) : referencePixelHeight;
+            drawingCamera.orthographicSize = targetPixelHeight / (2f * pixelsPerWorldUnit);
+            float viewWidth = 2f * drawingCamera.orthographicSize * drawingCamera.aspect;
+            Vector3 position = drawingCamera.transform.position;
+            position.x = characterBody.bounds.center.x + (0.5f - runnerViewportX) * viewWidth;
+            position.y = (0.5f - groundViewportY) * 2f * drawingCamera.orthographicSize;
+            drawingCamera.transform.position = position;
+        }
+
         private void UpdateHud()
         {
             string state = State == TrialState.Preparing ? $"READY  {preparationRemaining:0.0}s  / draw now" :
-                State == TrialState.Running ? "RUNNING  / bridge the gap" :
+                State == TrialState.Running ? (endlessMode ? "RUNNING  / endless route" : "RUNNING  / bridge the gap") :
                 State == TrialState.Failed ? "FALLEN  / press Reset to retry" : "CROSSED  / test complete";
             if (hud) hud.Present(CurrentInk, maximumInk, characterBodyHeight, Thickness, costPerUnit,
                 clearPreviousOnNewStroke, PointCount, StrokeCount, state, feedback);
+            if (hud && endlessMode)
+                hud.PresentRunner(DistanceTravelled, ProjectedBodyHeightPixels, ProjectedInkThicknessPixels,
+                    endlessWorld.ActivePlatformCount, endlessWorld.ActiveObstacleCount);
         }
 
         // Public input seam also used by deterministic editor validation; no legacy Input API.
@@ -168,7 +220,17 @@ namespace InkRunner.BlackInkPrototype
         private void PaintSweep(Vector2 screen, bool flushEndpoint)
         {
             Vector2 screenDelta = screen - previousScreen;
-            if (screenDelta.sqrMagnitude < 0.01f && !flushEndpoint) return;
+            if (screenDelta.sqrMagnitude < 0.01f)
+            {
+                // Following the runner must never paint a bridge by camera motion alone.
+                // After a held stationary frame, resume at a new world anchor on real movement.
+                if (endlessMode && State == TrialState.Running)
+                {
+                    EndStroke();
+                    return;
+                }
+                if (!flushEndpoint) return;
+            }
 
             // Sample the entire pointer sweep so a fast event cannot jump over UI or a no-draw zone.
             int steps = Mathf.Max(1, Mathf.CeilToInt(screenDelta.magnitude / 6f));
@@ -206,7 +268,7 @@ namespace InkRunner.BlackInkPrototype
 
         private bool PointAllowed(Vector2 local)
         {
-            if (!drawingBounds.Contains(local)) return false;
+            if (!InsideDrawingArea(local)) return false;
             Vector2 world = inkRoot.TransformPoint(local);
             Bounds body = characterBody.bounds;
             body.Expand(0.035f);
@@ -214,6 +276,13 @@ namespace InkRunner.BlackInkPrototype
             foreach (Collider2D zone in noDrawZones)
                 if (zone && zone.enabled && zone.OverlapPoint(world)) return false;
             return true;
+        }
+
+        private bool InsideDrawingArea(Vector2 local)
+        {
+            if (!endlessMode) return drawingBounds.Contains(local);
+            Vector3 viewport = drawingCamera.WorldToViewportPoint(inkRoot.TransformPoint(local));
+            return viewport.z > 0f && viewport.x >= 0f && viewport.x <= 1f && viewport.y >= 0f && viewport.y <= 1f;
         }
 
         public bool AppendTo(Vector2 requestedEnd, bool forceShortSegment = false)
@@ -287,7 +356,7 @@ namespace InkRunner.BlackInkPrototype
 
         private bool SegmentAllowed(Vector2 localStart, Vector2 localEnd)
         {
-            if (!drawingBounds.Contains(localEnd)) return false;
+            if (!InsideDrawingArea(localEnd)) return false;
             Vector2 a = inkRoot.TransformPoint(localStart), b = inkRoot.TransformPoint(localEnd);
             Bounds body = characterBody.bounds;
             body.Expand(0.035f);
@@ -324,6 +393,12 @@ namespace InkRunner.BlackInkPrototype
             Physics2D.SyncTransforms();
             character.interpolation = interpolation;
             character.WakeUp();
+            if (endlessMode)
+            {
+                UpdateRunnerCamera();
+                Vector2 foot = new Vector2(characterBody.bounds.center.x, 0f);
+                endlessWorld.ResetWorld(foot);
+            }
             CurrentInk = maximumInk;
             CreatedLength = 0f;
             preparationRemaining = preparationSeconds;
@@ -336,7 +411,8 @@ namespace InkRunner.BlackInkPrototype
                 characterAnimator.Update(0f);
                 characterAnimator.speed = 0f;
             }
-            feedback = "Draw a bridge along y = 0. The mouse path is the platform TOP.";
+            feedback = endlessMode ? "Continuous terrain / decorative obstacles. Left drag draws 25 px ink; Refill adds ink." :
+                "Draw a bridge along y = 0. The mouse path is the platform TOP.";
             Physics2D.SyncTransforms();
             UpdateHud();
         }
@@ -406,6 +482,9 @@ namespace InkRunner.BlackInkPrototype
             maximumPoints = Mathf.Max(2, maximumPoints);
             maximumSegments = Mathf.Max(1, maximumSegments);
             maximumStrokes = Mathf.Max(1, maximumStrokes);
+            pixelsPerWorldUnit = Mathf.Max(1f, pixelsPerWorldUnit);
+            characterHeightPixels = Mathf.Max(1f, characterHeightPixels);
+            inkThicknessPixels = Mathf.Max(1f, inkThicknessPixels);
         }
     }
 }

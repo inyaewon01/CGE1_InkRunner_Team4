@@ -1,9 +1,12 @@
 Commit this entire feature and every .meta listed below.
 No common scene, settings, package or character original was edited.
+Files: 91
 
 Assets/Features.meta
 Assets/Features/BlackInkPrototype.meta
 Assets/Features/BlackInkPrototype/Documentation.meta
+Assets/Features/BlackInkPrototype/Documentation/EndlessInkValidationReport.md
+Assets/Features/BlackInkPrototype/Documentation/EndlessInkValidationReport.md.meta
 Assets/Features/BlackInkPrototype/Documentation/UnityValidationReport.md
 Assets/Features/BlackInkPrototype/Documentation/UnityValidationReport.md.meta
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots.meta
@@ -15,16 +18,28 @@ Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/BlackInk_5
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/BlackInk_50.png.meta
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/BlackInk_Crossed.png
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/BlackInk_Crossed.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_10seconds.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_10seconds.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_60seconds.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_60seconds.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_Drawing25px.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_Drawing25px.png.meta
 Assets/Features/BlackInkPrototype/Editor.meta
 Assets/Features/BlackInkPrototype/Editor/BlackInkSceneBuilder.cs
 Assets/Features/BlackInkPrototype/Editor/BlackInkSceneBuilder.cs.meta
 Assets/Features/BlackInkPrototype/Editor/BlackInkValidation.cs
 Assets/Features/BlackInkPrototype/Editor/BlackInkValidation.cs.meta
+Assets/Features/BlackInkPrototype/Editor/EndlessInkValidation.cs
+Assets/Features/BlackInkPrototype/Editor/EndlessInkValidation.cs.meta
+Assets/Features/BlackInkPrototype/Editor/EnvironmentAssetImporter.cs
+Assets/Features/BlackInkPrototype/Editor/EnvironmentAssetImporter.cs.meta
 Assets/Features/BlackInkPrototype/FileManifest.txt
 Assets/Features/BlackInkPrototype/FileManifest.txt.meta
 Assets/Features/BlackInkPrototype/Materials.meta
 Assets/Features/BlackInkPrototype/Materials/DrawingGuide.mat
 Assets/Features/BlackInkPrototype/Materials/DrawingGuide.mat.meta
+Assets/Features/BlackInkPrototype/Materials/EnvironmentSprite.mat
+Assets/Features/BlackInkPrototype/Materials/EnvironmentSprite.mat.meta
 Assets/Features/BlackInkPrototype/Materials/InkBrush.mat
 Assets/Features/BlackInkPrototype/Materials/InkBrush.mat.meta
 Assets/Features/BlackInkPrototype/Materials/InkBrush.shader
@@ -50,11 +65,30 @@ Assets/Features/BlackInkPrototype/Scripts/BlackInkHud.cs
 Assets/Features/BlackInkPrototype/Scripts/BlackInkHud.cs.meta
 Assets/Features/BlackInkPrototype/Scripts/BlackInkTestController.cs
 Assets/Features/BlackInkPrototype/Scripts/BlackInkTestController.cs.meta
+Assets/Features/BlackInkPrototype/Scripts/EndlessInkWorld.cs
+Assets/Features/BlackInkPrototype/Scripts/EndlessInkWorld.cs.meta
 Assets/Features/BlackInkPrototype/Scripts/InkPathMath.cs
 Assets/Features/BlackInkPrototype/Scripts/InkPathMath.cs.meta
 Assets/Features/BlackInkPrototype/Scripts/InkStrokeGeometry.cs
 Assets/Features/BlackInkPrototype/Scripts/InkStrokeGeometry.cs.meta
 Assets/Features/BlackInkPrototype/Textures.meta
+Assets/Features/BlackInkPrototype/Textures/Environment.meta
+Assets/Features/BlackInkPrototype/Textures/Environment/obstacle_1.png
+Assets/Features/BlackInkPrototype/Textures/Environment/obstacle_1.png.meta
+Assets/Features/BlackInkPrototype/Textures/Environment/obstacle_2.png
+Assets/Features/BlackInkPrototype/Textures/Environment/obstacle_2.png.meta
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_1.png
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_1.png.meta
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_2.png
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_2.png.meta
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_3.png
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_3.png.meta
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_4.png
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_4.png.meta
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_5.png
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_5.png.meta
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_6.png
+Assets/Features/BlackInkPrototype/Textures/Environment/platform_6.png.meta
 Assets/Features/BlackInkPrototype/Textures/InkGaugeSource.png
 Assets/Features/BlackInkPrototype/Textures/InkGaugeSource.png.meta
 Assets/Features/BlackInkPrototype/ValidationResults.md

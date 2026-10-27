@@ -21,6 +21,18 @@ PrefabInstance:
       value: Inkwarrior_BlackInkTest
       objectReference: {fileID: 0}
     - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.1904762
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.1904762
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.1904762
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}

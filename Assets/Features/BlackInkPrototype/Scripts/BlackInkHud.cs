@@ -31,6 +31,8 @@ namespace InkRunner.BlackInkPrototype
         private GameObject ownedEventSystem;
         private Action resetAction;
         private Action refillAction;
+        private int lastPoints;
+        private int lastStrokes;
         private const float FillWidth = 438f;
 
         public void Build(Texture2D gaugeSource, Action reset, Action refill)
@@ -55,7 +57,7 @@ namespace InkRunner.BlackInkPrototype
 
             var panel = Panel("Ink and test measurements", canvasObject.transform, new Vector2(22f, 22f),
                 new Vector2(546f, 246f));
-            Label("BLACK INK / PLATFORM TEST", panel, new Vector2(20f, 12f), new Vector2(506f, 25f),
+            Label("BLACK INK / ENDLESS RUNNER", panel, new Vector2(20f, 12f), new Vector2(506f, 25f),
                 18f, Red, FontStyles.Bold);
             BuildGauge(panel, gaugeSource);
             inkReadout = Label("", panel, new Vector2(22f, 100f), new Vector2(504f, 27f), 19f, Ink,
@@ -68,9 +70,9 @@ namespace InkRunner.BlackInkPrototype
 
             var instructions = Panel("Drawing instructions", canvasObject.transform, new Vector2(-22f, 22f),
                 new Vector2(462f, 111f), new Vector2(1f, 1f));
-            Label("DRAW YOUR BRIDGE", instructions, new Vector2(18f, 12f), new Vector2(426f, 25f),
+            Label("RUN AND DRAW INK", instructions, new Vector2(18f, 12f), new Vector2(426f, 25f),
                 18f, Red, FontStyles.Bold);
-            Label("Left drag: draw the TOP of a thick ink platform.\nDraw during preparation, then let the runner cross.\nRefill restores ink. Reset clears the test.",
+            Label("Left drag: draw the TOP of an ink platform.\nContinuous ground; obstacles are visual only.\nRefill restores ink. Reset starts a fresh run.",
                 instructions, new Vector2(18f, 43f), new Vector2(426f, 58f), 16f, Ink);
 
             var status = Panel("Run status", canvasObject.transform, new Vector2(0f, -22f),
@@ -88,6 +90,8 @@ namespace InkRunner.BlackInkPrototype
             if (hudCanvas == null)
                 return;
 
+            lastPoints = points;
+            lastStrokes = strokes;
             float value = Mathf.Clamp(current, 0f, Mathf.Max(0f, maximum));
             float fraction = maximum > 0f ? Mathf.Clamp01(value / maximum) : 0f;
             fillMask.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, FillWidth * fraction);
@@ -99,6 +103,17 @@ namespace InkRunner.BlackInkPrototype
                                 $"POINTS  {points}     |     STROKES  {strokes}";
             stateLabel.text = state ?? string.Empty;
             feedbackLabel.text = feedback ?? string.Empty;
+        }
+
+        /// <summary>Extra runner metrics, using measured current Game view pixels.</summary>
+        public void PresentRunner(float distance, float bodyPx, float inkPx, int platforms, int obstacles)
+        {
+            if (hudCanvas == null || measurements == null)
+                return;
+
+            measurements.text = $"BODY  {bodyPx:0.#} px     |     INK  {inkPx:0.#} px  (screen pixels)\n" +
+                                $"DISTANCE  {Mathf.Max(0f, distance):0.0} u     |     PLATFORMS  {platforms}     |     DECOR  {obstacles}\n" +
+                                $"POINTS  {lastPoints}     |     STROKES  {lastStrokes}";
         }
 
         /// <summary>Uses actual scaled uGUI geometry, including panel backgrounds and buttons.</summary>
