@@ -771,20 +771,20 @@ MonoBehaviour:
   pixelsPerWorldUnit: 100
   referencePixelHeight: 1080
   characterHeightPixels: 40
-  inkThicknessPixels: 15
+  inkThicknessPixels: 10
   originalCharacterBodyHeight: 2.1
   runnerViewportX: 0.08
   groundViewportY: 0.27
   maximumInk: 100
   costPerUnit: 10
   characterBodyHeight: 0.4
-  thicknessRatio: 0.375
+  thicknessRatio: 0.25
   minimumPointSpacingRatio: 0.025
   clearPreviousOnNewStroke: 0
   preparationSeconds: 3
   runSpeed: 1.8
   platformGap: 0
-  maximumSlope: 35
+  maximumSlope: 60
   failureY: -5
   drawingBounds:
     serializedVersion: 2

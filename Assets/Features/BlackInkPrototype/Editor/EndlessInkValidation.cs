@@ -35,9 +35,9 @@ namespace InkRunner.BlackInkPrototype.Editor
         // Keep graphics enabled: screenshots render the real URP camera, sprites, ink and uGUI.
         public static void BuildAndValidateBatch()
         {
+            // Keep the old CLI entry point, but validate the saved scene in place.
+            // Rebuilding here would discard scene edits such as the team's background.
             batch = true;
-            EditorSceneManager.OpenScene("Assets/Scenes/PlayScene.unity");
-            BlackInkSceneBuilder.BuildScene();
             StartValidation();
         }
 

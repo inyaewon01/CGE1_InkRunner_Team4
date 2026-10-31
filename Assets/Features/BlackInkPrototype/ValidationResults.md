@@ -1,82 +1,85 @@
-# 랜덤 빈틈·15px 먹 구현 및 검증 결과
+# 현재 씬 A / B / C 수정 및 검증 결과
 
-검증일: **2026-10-27 (한국 시간)**
+검증일: **2026-10-31 (한국 시간)** · Unity **6000.3.23f1**
 
-Unity **6000.3.23f1**의 Play Mode와 실제 Physics2D로 검증했고, 최신 자동 검증은 **41개 모두 PASS**입니다.
-원본 프로젝트가 Unity에서 열려 있어 동일 소스를 `Logs/RandomGapValidationProject/`에 격리 복사해 실행했습니다.
+기존 저장된 `BlackInkTestScene`과 같은 소스로 실제 Unity Play Mode·Physics2D를 실행했습니다.
+원본 Unity 프로젝트가 열려 있어 동일 소스를 격리 복사한 프로젝트에서 검증했습니다.
+최종 현재 씬 회귀·경계 진단은 **134개 PASS / 실패 0개**입니다.
+같은 최종 소스로 기존 랜덤 맵·먹·Reset·자원 규칙도 다시 실행해 **41개 모두 PASS**했습니다.
+안정적인 연속 입력을 검증한 경사 범위는 **30° 이하**이며, 생성 선분의 기존 **35° 상한**과 구분합니다.
 
-**플랫폼 빈틈 150~250px, 먹 두께 15px, 먹이 없을 때 실제 추락, 그린 먹 다리를 건너 다음 플랫폼에 도착하는 동작을 확인했습니다.**
-장시간 검증은 시뮬레이션 120초·실제 이동 200u 이상입니다. 이때 **Editor 검증 코드가 입력 처리 함수를 통해 다리 46개를 그리고 Refill을 11회 호출**했습니다.
-실제 게임에는 자동 다리나 자동 Refill 기능이 없으며, 사용자가 먹을 그리지 않으면 추락합니다.
+원본: [현재 씬 검증 보고서](Documentation/CurrentSceneValidationReport.md) · [물리 측정 CSV](Documentation/CurrentScenePhysicsMetrics.csv) · [경사 경계 진단](Documentation/CurrentSceneSlopeLimitsReport.md)
 
-상세 자동 기록: [RandomGapInkValidationReport.md](Documentation/RandomGapInkValidationReport.md)
+## 1. 실행 경로와 재현
 
-## 실행 방법
+TitleScene에서 **Start**를 누르거나 `Tools > InkRunner > Open Black Ink Test Scene`을 선택합니다.
+실행 씬은 기존 `Assets/Features/BlackInkPrototype/Scenes/BlackInkTestScene.unity`입니다. 새 게임·새 씬을 만들지 않았습니다.
 
-1. `Assets/Features/BlackInkPrototype/Scenes/BlackInkTestScene.unity`를 엽니다.
-2. **Play**를 누르면 3초 준비 후 캐릭터가 오른쪽으로 자동 전진합니다.
-3. 캐릭터가 도착하기 전에 빈틈 양쪽 플랫폼의 윗면을 좌클릭 드래그로 연결합니다.
-4. **Refill**은 잉크만 채웁니다. 추락하면 **Reset**으로 처음부터 다시 시작합니다.
+Play 후 기존 3초 준비 중 빈틈 양쪽 플랫폼의 **윗면부터 윗면까지** 좌클릭 드래그로 연결합니다.
+캐릭터 40px, 먹 충돌 몸체 15px, 랜덤 빈틈 150~250px를 유지합니다.
+Reset 후에도 배경 위에 플랫폼이 보이고, 완만한 경사 먹을 따라 달리는지 확인할 수 있습니다.
 
-메뉴 `Tools > InkRunner > Open Black Ink Test Scene`으로도 같은 씬을 열 수 있습니다.
-기존 테스트 씬을 갱신했으며 공용 PlayScene과 분리되어 있습니다.
+## 2. 문제별 원인과 처리
 
-## 실제 확인한 내용
+| 항목 | 확인한 원인 | 처리 |
+| --- | --- | --- |
+| A: 플랫폼이 안 보임 | 저장 미리보기의 순서는 1이지만 Reset이 만든 플랫폼은 배경과 같은 순서 0 | 런타임 생성 플랫폼의 SpriteRenderer 순서를 1로 맞춤. 배경은 유지 |
+| B: 준비 시간 의심 | 기존 `READY 3.0s` 소수점 표시 한 개이며 초기·Reset 출발 시간이 정상 | 준비 코드 유지. 새 3/2/1 UI·타이머·코루틴 추가 생략 |
+| C: 완만한 경사 먹이 끊김·끼임 | 1px 표본의 `(1,1)` 계단이 45°로 판정돼 붓질이 잘리고 64개 상한을 소진 | 6px 미만의 짧은 초과 경사 표본은 기준점을 유지해 판정 보류. 유효 생성 길이만 과금 |
+| 기존 Start의 실행 대상 | 이전 `PlayScene`에는 현재 먹 시스템이 없음 | 기존 Start·LoadPlay를 저장된 `BlackInkTestScene`으로 연결하고 Build Settings 마지막에 등록 |
 
-- **픽셀 크기:** 몸 기준 높이 0.40u와 먹 충돌 두께 0.15u가 현재 Game 뷰에서 실제 **40px / 15px**로 투영됩니다. 100px = 1u 기준입니다.
-- **원본 캐릭터:** 테스트 Variant만 `40 / 210` 비율로 축소하고 기존 이미지·Animator를 연결합니다. 몸 기준은 머리~발바닥이며 무기·망토·투명 여백을 제외합니다.
-- **출발과 카메라:** 화면 왼쪽 약 8% 위치에서 출발하고 달리는 동안 카메라가 그 위치를 유지하며 따라갑니다.
-- **빈틈 범위와 다양성:** 첫 빈틈을 포함해 보행면 사이의 실제 간격이 **150~250px**에 들어갑니다. 각 빈틈은 고정값 대신 서로 다른 랜덤 폭을 사용합니다.
-- **실제로 비어 있는 지형:** 빈틈 중심 아래에 숨겨진 지면 Collider2D가 없습니다. 먹 없이 첫 빈틈에 도착한 캐릭터는 실제 중력으로 추락합니다.
-- **먹 다리 횡단:** 플레이어 입력 경로로 첫 랜덤 빈틈에 15px 먹을 그린 뒤 실제 Physics2D 캐릭터가 그 위를 밟고 다음 돌 플랫폼에 도착합니다.
-- **플랫폼·장식 종류:** 긴 달리기 중 `platform_1`~`platform_6`와 `obstacle_1`~`obstacle_2`가 모두 나타납니다. 장애물에는 Collider2D·Rigidbody2D가 없어 충돌·피격 없이 통과합니다.
-- **장시간 생성과 정리:** 검증용 다리·Refill 보조 아래 120초·200u 이상 전진하며 앞쪽 맵을 생성하고 뒤쪽을 정리합니다. 관측된 최대 활성 수는 **플랫폼 6개 / 장애물 4개**, 플랫폼 설정 상한은 32개입니다.
-- **먹 생성과 비용:** 빠른 3.6u 붓질은 연속 메시·충돌 몸체를 만들고 정확히 잉크 36을 소모합니다. 빠르거나 느린 샘플링 모두 같은 완성 길이에 같은 비용을 청구합니다.
-- **잔량 제한:** 잔량 7이면 마지막 선분을 0.7u로 잘라 생성합니다. 먹의 붓 재질과 번짐 메시를 유지합니다.
-- **카메라와 입력:** 단순 클릭과 정지한 마우스는 먹이나 비용을 만들지 않습니다. 마우스를 누른 채 카메라만 움직여도 동일합니다.
-- **먹의 월드 고정:** 스크롤 중 기존 먹의 위치·UV·충돌 형상이 유지됩니다. 지나간 먹은 정리하고 현재 다리는 저장 상한 안에서 유지합니다.
-- **Refill·Reset:** Refill은 먹과 캐릭터 위치를 유지합니다. Reset은 먹을 지우고 시작 위치·카메라·준비 시간·잉크·초기 맵을 복원하며, 같은 시드의 플랫폼 위치와 빈틈 폭을 재현합니다.
-- **추락과 복구:** 추락하면 실패 상태가 되고 Reset으로 실제 물리 몸체와 화면의 Collider 위치를 함께 복원합니다.
+C 수정은 방향 반전·금지 영역·긴 급경사 제한을 유지합니다. Collider 형상·캐릭터 이동 코드·물리 설정을 바꾸지 않았습니다.
 
-기본값은 준비 3초, 달리기 속도 1.8u/초, 잉크 100, 길이 1u당 비용 10입니다.
-플랫폼 보행 폭은 2.0~3.6u, 랜덤 빈틈은 1.5~2.5u, 장식의 보이는 높이는 55~95px입니다.
-맵 시드는 `27102026`이며 같은 화면 크기와 설정에서 Reset하면 같은 경로를 재생합니다.
-세부 구성과 Inspector 위치는 [README_KO.md](README_KO.md)를 확인하세요.
+## 3. 실제 검증 결과
 
-## 실제 Unity 렌더
+- **A 가시성:** 생성 플랫폼 순서 1 / 배경 순서 0을 확인했습니다. 실제 URP 렌더 차분의 가시 비율은 **0.9935**이며 출발 발판의 물리 지지도 확인했습니다.
+- **B 준비:** 최초 Running 전환은 **3.0006초**였습니다. 준비 중 Reset과 달리는 중 Reset은 각각 **3.0001초**, 빠른 Reset 10회 후에는 **3.0005초**에 한 번만 출발했습니다. 준비 중 수평 이동·거리 진행은 0이었습니다.
+- **실제 입력 경로 C:** 정수 픽셀 간격 1px·2px와 좌→우·우→좌 입력으로 **10°·20°·30° 총 12개 조합**을 검사했습니다. 모두 한 붓질로 이어졌고 실제 캐릭터가 횡단했으며 지속적인 경사 중간 정지가 없었습니다.
+- **수정 전후:** 20°·1px·좌→우는 **64개 붓질 / 2.1203u 생성 / 도착 실패 → 1개 붓질 / 5.2007u 생성 / 도착 성공**으로 바뀌었습니다. 생성된 길이에 맞는 과금도 통과했습니다.
+- **먹 물리:** 평지, ±10°·±20°·±35°의 연속 형상, 평지→경사→내리막 전환, 300·600점 밀집 경로, 작은 흔들림, 캐릭터가 밟은 상태의 먹 연장을 확인했습니다. 이 형상 검사는 아래 정수 픽셀 입력 한계와 별개입니다.
+- **Title 진입:** 기존 배선된 Start 버튼의 UnityEvent를 두 번 연속 호출해 **씬 전환 1회**, 현재 Controller·World 초기화와 EventSystem 1개, 배경 보존을 확인했습니다. 진입 직후 기존 준비 시간은 2.9745초 남아 있었습니다.
+- **기존 규칙 회귀:** 현재 소스로 41개를 재검증해 40px/15px, 빈틈 150~250px, 길이별 비용, Refill·Reset, 스크롤·정리·추락을 확인했습니다. 120초·200u 이상 달리기는 **Editor 입력 다리 46개·명시 Refill 11회** 보조 결과이며 관측 활성 수는 플랫폼 6개·장식 4개였습니다. 일반 Play에는 자동 다리·자동 Refill이 없습니다.
 
-- [150~250px 랜덤 빈틈](Documentation/ValidationScreenshots/EndlessInk_Gaps150-250px.png)
-- [먹 없이 빈틈에 추락](Documentation/ValidationScreenshots/EndlessInk_GapFallen.png)
-- [15px 먹 다리 그리기](Documentation/ValidationScreenshots/EndlessInk_Drawing15px.png)
-- [먹 다리를 건너 다음 플랫폼에 도착](Documentation/ValidationScreenshots/EndlessInk_GapCrossed.png)
-- [검증용 다리·Refill 보조 달리기 10초](Documentation/ValidationScreenshots/EndlessInk_GapRun10seconds.png)
-- [검증용 다리·Refill 보조 달리기 60초](Documentation/ValidationScreenshots/EndlessInk_GapRun60seconds.png)
+그리기 입력은 실제 OS 마우스가 아니라 **공개 `ProcessPointer` / `AppendTo` 경로**로 전달했습니다.
+분리된 경사 측정은 같은 캐릭터·물리·먹 코드를 사용하고 Editor 전용 임시 지형과 시작 위치를 두어,
+0.02초 간격으로 기존 `FixedUpdate` 및 `Physics2D.Simulate`를 실행했습니다. 배경·임시 설정·시간 배율은 종료 시 복원합니다.
 
-실제 Unity URP 카메라와 HUD를 1920×1080 렌더 타깃에 출력했습니다.
-10초·60초는 시뮬레이션 시간입니다. 배치 Editor에서 검증했으며 수작업 시안이나 합성 화면이 아닙니다.
+## 4. 경사 지원 범위와 남은 한계
 
-## 재검증과 확인 범위
+| 입력/형상 | 관측 결과 | 해석 |
+| --- | --- | --- |
+| 10°·20°·30°, 1px·2px, 양방향 입력 | 12개 조합 모두 한 붓질·실제 횡단 | 안정적인 연속 입력 검증 범위는 30° 이하 |
+| 34° 정수 픽셀 입력 | 9개 붓질로 분할, 해당 측정에서는 횡단 | 한 번에 이어지는 입력 보장 범위에 포함하지 않음 |
+| 35° 정수 픽셀 입력 | 34~35개 붓질로 분할, 해당 측정에서는 횡단 | 같은 제한. 모든 35° 입력을 연속 지원한다는 의미가 아님 |
+| 40°·45° 입력 | 완전한 다리 횡단 실패 | 지원 범위 밖. 유효한 일부 조각만 생성하거나 생성하지 않음 |
+| 실제 생성 선분 | 35° 상한을 넘는 선분 0개 | 기존 생성 제한 유지 |
+| 15px 높이의 별도 수직 입구 벽 | 자동으로 올라가지 않음, 5.34초 정지 관측 | 경사 중간 걸림과 구분. 90° 턱 자동 오르기 기능 없음 |
 
-메뉴 `Tools > InkRunner > Validate Endless Ink Runner (Play Mode)`로 같은 검증을 실행합니다.
-예전 `Validate Black Ink Prototype (Play Mode)` 메뉴도 새 검증을 실행합니다.
-실행한 프로젝트의 `Logs/EndlessInkValidationResults/`에 결과 보고서와 렌더가 저장됩니다.
-이번 원본 출력은 `Logs/RandomGapValidationProject/Logs/EndlessInkValidationResults/`입니다.
+134개 통과에는 경계 입력에서 **35° 제한을 지키는지 확인한 항목**도 포함됩니다.
+경계 진단은 상한 준수를 검사하며, 34~35°의 연속성이나 40~45°의 횡단을 성공으로 판정하지 않습니다.
+현재 발판보다 15px 위에서 갑자기 시작하는 먹은 수직 턱이 됩니다. 발판 윗면부터 완만하게 이어 그리세요.
+실제 OS 마우스·포커스·모든 Game 뷰 크기에서의 수동 조작과 별도 Player 빌드는 검증하지 않았습니다.
+Editor 검색 인덱서의 `ArgumentOutOfRangeException`은 원본 보고서에 환경 관찰로 별도 기록했습니다.
 
-- 실제 물리 추락·횡단·장시간 달리기·카메라 이동을 실행했습니다. 입력은 컨트롤러의 입력 처리 함수를 호출했습니다.
-- 검증용 자동 입력·Refill은 Editor 코드에만 있습니다. 일반 Play에서는 사용자가 직접 다리를 그리고 Refill을 눌러야 합니다.
-- 프로토타입 실행 중 런타임 오류·참조 누락·셰이더 오류·예외는 없었습니다.
-- 격리 복사본의 Unity Editor 검색 인덱서에서 `ArgumentOutOfRangeException`이 기록됐습니다. `UnityEditor.Search` 환경 관찰로 원본 보고서에 별도 기록했으며 위 프로토타입 런타임 검증과 구분합니다.
-- 실제 OS 마우스·포커스 전환, 모든 Game 뷰 크기에서의 수동 조작, 별도 Player 빌드는 검증하지 않았습니다.
-- 공용 PlayScene 통합, 장애물 충돌·피격, 점프·흰 먹·잉크 자동 회복은 이번 구현 범위에 포함하지 않습니다.
-- 한 붓질은 x방향이 유지되고 기본 35도 이하인 경로를 지원합니다. 몸 두께 외 붓털·번짐은 비충돌 장식입니다.
-- 몸의 기준 높이는 고정하며 애니메이션 포즈별 외곽선은 다를 수 있습니다. Game 뷰 표시 배율이 1×가 아니면 모니터에서 잰 픽셀 수는 달라집니다. HUD는 기존 TMP 폰트의 한글 제한으로 영문입니다.
+## 5. 파일과 검증 실행
 
-## 이전 기록과 작업 보호
+상세 변경 파일·원인·수정 전 재현은 [CurrentSceneBugfixReport.md](Documentation/CurrentSceneBugfixReport.md)를 확인하세요.
 
-[EndlessInkValidationReport.md](Documentation/EndlessInkValidationReport.md)와 25px 먹·붙은 지형 스크린샷은 **간격 0u·먹 25px 버전의 32개 통과 기록**으로 유지합니다.
-[UnityValidationReport.md](Documentation/UnityValidationReport.md)와 `BlackInk_*.png`는 **2026-10-20의 이전 두 플랫폼 버전** 기록입니다.
-이전 기록은 이번 랜덤 빈틈·15px 먹의 최신 41개 결과와 구분해야 합니다.
+- [수정 전 배경에 가려진 플랫폼](Documentation/ValidationScreenshots/Current_Before_PlatformsHidden.png)
+- [수정 후 준비 화면](Documentation/ValidationScreenshots/Current_After_Preparing.png)
+- [기존 Title Start로 진입](Documentation/ValidationScreenshots/Current_After_TitleStart.png)
+- [실제 입력 경로로 생성한 20° 먹 — 횡단 순간 사진은 아님](Documentation/ValidationScreenshots/Current_After_Uphill20.png)
 
-제공한 플랫폼·장애물 이미지 8개는 `Textures/Environment/`에 `.png`로 복사했고 원본과 바이트가 동일합니다.
-원본 Inkwarrior Prefab·스프라이트·Animator·Run 애니메이션, 공용 코드와 공용 씬을 유지합니다.
-작업 브랜치는 **InkTest**이며 이번 변경의 **Git Commit·Push는 수행하지 않았습니다.**
+메뉴 `Tools > InkRunner > Validate Saved Current Scene (A B C)`로 재검증합니다.
+저장된 현재 씬을 열며 씬 재생성 도구를 호출하지 않습니다. 결과는 실행 프로젝트의 `Logs/CurrentSceneBugValidationResults/`에 저장됩니다.
+이번 최종 원본 출력은 `Logs/CurrentBugsFinalResults/`에 보존했습니다.
+기존 규칙 재검증 원본: [CurrentSceneLegacyRegressionReport.md](Documentation/CurrentSceneLegacyRegressionReport.md).
+
+## 6. 보존 범위와 이전 기록
+
+팀의 저장된 씬·배경, 원본 Inkwarrior Prefab·이미지·Animator, Unity·URP·패키지는 유지합니다.
+기존 Title·코어 진입 코드와 Build Settings만 현재 실행 대상에 맞춰 연결했고 새 준비 UI·게임 시스템은 추가하지 않았습니다.
+기존 `InkTest` 브랜치에서 작업했으며 **Git Commit·Push는 수행하지 않았습니다.**
+
+[2026-10-27 랜덤 빈틈 41개 기록](Documentation/RandomGapInkValidationReport.md), [이전 25px·붙은 지형 기록](Documentation/EndlessInkValidationReport.md), [2026-10-20 기록](Documentation/UnityValidationReport.md)과 해당 스크린샷은 역사 기록으로 유지합니다.
+이전 장시간 달리기 기록도 Editor 입력 다리·명시 Refill 보조 결과로 현재 회귀와 같은 방식이며 일반 게임의 자동 기능이 아닙니다.

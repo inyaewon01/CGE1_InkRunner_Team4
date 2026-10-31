@@ -11,7 +11,7 @@ public class SceneManager : MonoBehaviour
 
     // 이름 정의
     private const string TITLE_SCENE = "TitleScene";
-    private const string PLAY_SCENE = "PlayScene";
+    private const string PLAY_SCENE = "BlackInkTestScene";
     private const string SCORE_SCENE = "ScoreScene";
 
     // 현재 씬을 로딩하고 있는지 확인

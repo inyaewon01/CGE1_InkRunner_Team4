@@ -14,6 +14,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/ScoreScene.unity
     guid: 163ba163cc83579419e863477ce99b6b
+  - enabled: 1
+    path: Assets/Features/BlackInkPrototype/Scenes/BlackInkTestScene.unity
+    guid: 7d866db69c5f0404cbe4024d7bf1eee7
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

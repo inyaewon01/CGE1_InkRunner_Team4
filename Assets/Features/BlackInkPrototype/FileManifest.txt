@@ -1,10 +1,26 @@
-Commit this entire feature and every .meta listed below.
-No common scene, settings, package or character original was edited.
-Files: 105
+Feature files and existing entry-point dependencies for the current scene fixes.
+Keep the feature assets and their Unity .meta files together.
+TitleUIManager.cs, Core/SceneManager.cs and EditorBuildSettings.asset also change in this fix; include them when sharing.
+The saved game scenes, background images, character originals, prefab variant, packages and render pipeline are preserved.
+Files: 134
 
 Assets/Features.meta
 Assets/Features/BlackInkPrototype.meta
 Assets/Features/BlackInkPrototype/Documentation.meta
+Assets/Features/BlackInkPrototype/Documentation/CurrentSceneBaselineReport.md
+Assets/Features/BlackInkPrototype/Documentation/CurrentSceneBaselineReport.md.meta
+Assets/Features/BlackInkPrototype/Documentation/CurrentSceneBugfixReport.md
+Assets/Features/BlackInkPrototype/Documentation/CurrentSceneBugfixReport.md.meta
+Assets/Features/BlackInkPrototype/Documentation/CurrentSceneLegacyRegressionReport.md
+Assets/Features/BlackInkPrototype/Documentation/CurrentSceneLegacyRegressionReport.md.meta
+Assets/Features/BlackInkPrototype/Documentation/CurrentScenePhysicsMetrics.csv
+Assets/Features/BlackInkPrototype/Documentation/CurrentScenePhysicsMetrics.csv.meta
+Assets/Features/BlackInkPrototype/Documentation/CurrentScenePointerBaselineReport.md
+Assets/Features/BlackInkPrototype/Documentation/CurrentScenePointerBaselineReport.md.meta
+Assets/Features/BlackInkPrototype/Documentation/CurrentSceneSlopeLimitsReport.md
+Assets/Features/BlackInkPrototype/Documentation/CurrentSceneSlopeLimitsReport.md.meta
+Assets/Features/BlackInkPrototype/Documentation/CurrentSceneValidationReport.md
+Assets/Features/BlackInkPrototype/Documentation/CurrentSceneValidationReport.md.meta
 Assets/Features/BlackInkPrototype/Documentation/EndlessInkValidationReport.md
 Assets/Features/BlackInkPrototype/Documentation/EndlessInkValidationReport.md.meta
 Assets/Features/BlackInkPrototype/Documentation/RandomGapInkValidationReport.md
@@ -20,6 +36,14 @@ Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/BlackInk_5
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/BlackInk_50.png.meta
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/BlackInk_Crossed.png
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/BlackInk_Crossed.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/Current_After_Preparing.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/Current_After_Preparing.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/Current_After_TitleStart.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/Current_After_TitleStart.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/Current_After_Uphill20.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/Current_After_Uphill20.png.meta
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/Current_Before_PlatformsHidden.png
+Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/Current_Before_PlatformsHidden.png.meta
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_10seconds.png
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_10seconds.png.meta
 Assets/Features/BlackInkPrototype/Documentation/ValidationScreenshots/EndlessInk_60seconds.png
@@ -43,6 +67,8 @@ Assets/Features/BlackInkPrototype/Editor/BlackInkSceneBuilder.cs
 Assets/Features/BlackInkPrototype/Editor/BlackInkSceneBuilder.cs.meta
 Assets/Features/BlackInkPrototype/Editor/BlackInkValidation.cs
 Assets/Features/BlackInkPrototype/Editor/BlackInkValidation.cs.meta
+Assets/Features/BlackInkPrototype/Editor/CurrentSceneBugValidation.cs
+Assets/Features/BlackInkPrototype/Editor/CurrentSceneBugValidation.cs.meta
 Assets/Features/BlackInkPrototype/Editor/EndlessInkValidation.cs
 Assets/Features/BlackInkPrototype/Editor/EndlessInkValidation.cs.meta
 Assets/Features/BlackInkPrototype/Editor/EnvironmentAssetImporter.cs
@@ -107,3 +133,8 @@ Assets/Features/BlackInkPrototype/Textures/InkGaugeSource.png
 Assets/Features/BlackInkPrototype/Textures/InkGaugeSource.png.meta
 Assets/Features/BlackInkPrototype/ValidationResults.md
 Assets/Features/BlackInkPrototype/ValidationResults.md.meta
+Assets/Script/Core/SceneManager.cs
+Assets/Script/Core/SceneManager.cs.meta
+Assets/Script/TitleUIManager.cs
+Assets/Script/TitleUIManager.cs.meta
+ProjectSettings/EditorBuildSettings.asset

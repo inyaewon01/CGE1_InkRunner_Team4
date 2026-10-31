@@ -180,7 +180,7 @@ namespace InkRunner.BlackInkPrototype
                 visual.transform.localPosition = new Vector3(
                     -(bounds.min.x + bounds.size.x * landmark.x) * scale,
                     -(bounds.min.y + bounds.size.y * landmark.z) * scale, 0f);
-                AddSpriteRenderer(visual, sprite, 0);
+                AddSpriteRenderer(visual, sprite, 1);
                 VisibleVariantsMask |= 1 << variant;
             }
 

@@ -27,7 +27,7 @@ namespace InkRunner.BlackInkPrototype
         [Min(1f)] public float pixelsPerWorldUnit = 100f;
         [Min(1f)] public float referencePixelHeight = 1080f;
         [Min(1f)] public float characterHeightPixels = 40f;
-        [Min(1f)] public float inkThicknessPixels = 15f;
+        [HideInInspector] public float inkThicknessPixels = 10f;
         [Min(0.1f)] public float originalCharacterBodyHeight = 2.10f;
         [Range(0.03f, 0.4f)] public float runnerViewportX = 0.08f;
         [Range(0.15f, 0.55f)] public float groundViewportY = 0.27f;
@@ -37,7 +37,7 @@ namespace InkRunner.BlackInkPrototype
         [Min(0.01f)] public float costPerUnit = 10f;
         [Tooltip("run_01: head to boot sole, approximately 210 pixels / 100 PPU; excludes sword and cape.")]
         [Min(0.1f)] public float characterBodyHeight = 2.10f;
-        [Range(0.1f, 1.5f)] public float thicknessRatio = 0.75f;
+        [Range(0.05f, 1.5f)] public float thicknessRatio = 0.25f;
         [Min(0.001f)] public float minimumPointSpacingRatio = 0.025f;
         public bool clearPreviousOnNewStroke;
 
@@ -46,7 +46,8 @@ namespace InkRunner.BlackInkPrototype
         [Min(0.1f)] public float runSpeed = 1.8f;
         [Tooltip("Legacy two-platform trial only. In endless mode use EndlessInkWorld Minimum / Maximum Platform Gap.")]
         [Min(0f)] public float platformGap = 3f;
-        [Range(5f, 45f)] public float maximumSlope = 35f;
+        [Tooltip("Maximum walkable / drawable slope. Steeper contacts block forward movement.")]
+        [Range(5f, 80f)] public float maximumSlope = 60f;
         public float failureY = -5f;
         public Rect drawingBounds = new Rect(-12f, -3f, 28f, 7.5f);
 
@@ -83,6 +84,9 @@ namespace InkRunner.BlackInkPrototype
         private bool held, suppressUntilRelease, hasAnchor, focused = true;
         private int strokeDirection;
         private float preparationRemaining;
+        private readonly ContactPoint2D[] groundContacts = new ContactPoint2D[32];
+        private readonly RaycastHit2D[] groundHits = new RaycastHit2D[16];
+        private bool wasSupported;
         private string feedback = "Draw across the gap before the runner arrives.";
 
         private void Awake()
@@ -102,7 +106,7 @@ namespace InkRunner.BlackInkPrototype
             if (endlessMode)
             {
                 characterBodyHeight = characterHeightPixels / pixelsPerWorldUnit;
-                thicknessRatio = inkThicknessPixels / characterHeightPixels;
+                inkThicknessPixels = characterHeightPixels * thicknessRatio;
                 character.transform.localScale = Vector3.one * (characterBodyHeight / originalCharacterBodyHeight);
                 Physics2D.SyncTransforms();
                 UpdateRunnerCamera();
@@ -151,8 +155,77 @@ namespace InkRunner.BlackInkPrototype
         {
             if (!character) return;
             Vector2 velocity = character.linearVelocity;
-            velocity.x = State == TrialState.Running ? runSpeed : 0f;
+            if (State != TrialState.Running)
+            {
+                velocity.x = 0f;
+                character.linearVelocity = velocity;
+                wasSupported = false;
+                return;
+            }
+
+            float minimumNormalY = Mathf.Cos(maximumSlope * Mathf.Deg2Rad) - 0.0001f;
+            Vector2 normal = Vector2.zero;
+            bool wall = false;
+            var filter = new ContactFilter2D();
+            filter.NoFilter();
+            filter.useTriggers = false;
+            int count = characterBody.GetContacts(filter, groundContacts);
+            for (int i = 0; i < count; i++)
+            {
+                var contact = groundContacts[i];
+                Collider2D surface = contact.collider == characterBody ? contact.otherCollider : contact.collider;
+                Vector2 n = SurfaceNormal(surface, contact.point, contact.normal);
+                if (n.x < -0.01f && n.y < minimumNormalY && n.y > -0.1f) wall = true;
+                if (n.y >= minimumNormalY && n.y > normal.y &&
+                    groundContacts[i].point.y <= characterBody.bounds.center.y)
+                    normal = n;
+            }
+            // Only recover an immediately adjacent support after a grounded step.
+            // There is no position snap, long downward ray, or attachment across a cliff.
+            if (normal == Vector2.zero && wasSupported && velocity.y <= 0.01f)
+            {
+                count = characterBody.Cast(Vector2.down, filter, groundHits, 0.02f);
+                for (int i = 0; i < count; i++)
+                {
+                    Vector2 n = groundHits[i].normal;
+                    if (n.y >= minimumNormalY && n.y > normal.y) normal = n;
+                }
+            }
+            wasSupported = normal != Vector2.zero;
+            if (wasSupported)
+            {
+                Vector2 tangent = new Vector2(normal.y, -normal.x);
+                // Compensate this step's gravity only while supported. Physics still
+                // resolves contacts; airborne motion keeps gravity and vertical momentum.
+                velocity = tangent * (wall ? 0f : runSpeed) -
+                    Physics2D.gravity * character.gravityScale * Time.fixedDeltaTime;
+            }
+            else velocity.x = wall ? 0f : runSpeed;
             character.linearVelocity = velocity;
+        }
+
+        // Polygon decomposition can return a steep corner normal on a densely
+        // sampled, walkable ink top. Use the actual ribbon segment near that top;
+        // leave underside contacts and upright endpoint walls to normal physics.
+        private Vector2 SurfaceNormal(Collider2D surface, Vector2 point, Vector2 fallback)
+        {
+            if (!surface || fallback.y < 0f) return fallback;
+            var ink = surface.GetComponent<InkStrokeGeometry>();
+            if (!ink || ink.PointCount < 2) return fallback;
+            Vector2 p = ink.transform.InverseTransformPoint(point);
+            var path = ink.Points;
+            int low = 0, high = path.Count - 1;
+            if (p.x <= path[low].x + 0.00001f || p.x >= path[high].x - 0.00001f) return fallback;
+            while (high - low > 1)
+            {
+                int middle = (low + high) / 2;
+                if (path[middle].x <= p.x) low = middle; else high = middle;
+            }
+            Vector2 a = path[low], b = path[high];
+            float top = Mathf.Lerp(a.y, b.y, (p.x - a.x) / (b.x - a.x));
+            if (Mathf.Abs(p.y - top) > 0.025f) return fallback;
+            Vector2 tangent = ink.transform.TransformVector(b - a).normalized;
+            return new Vector2(-tangent.y, tangent.x);
         }
 
         private void LateUpdate()
@@ -294,8 +367,31 @@ namespace InkRunner.BlackInkPrototype
             float length = Vector2.Distance(anchor, end);
             if (length < 0.00001f) return false;
             int direction = end.x >= anchor.x ? 1 : -1;
-            if (!InkPathMath.GentleSegment(anchor, end, maximumSlope) ||
-                (strokeDirection != 0 && strokeDirection != direction))
+            bool reversing = strokeDirection != 0 && strokeDirection != direction &&
+                Mathf.Abs(end.x - anchor.x) > 0.00001f;
+            bool gentle = InkPathMath.GentleSegment(anchor, end, maximumSlope);
+            // A rounded cursor at the slope limit can overshoot by one pixel.
+            // Correct only that precision error; mesh and collider share this top,
+            // and every committed segment still respects the configured angle.
+            float maxRise = Mathf.Abs(end.x - anchor.x) * Mathf.Tan(maximumSlope * Mathf.Deg2Rad);
+            float pixel = 2f * drawingCamera.orthographicSize / Mathf.Max(1, drawingCamera.pixelHeight);
+            float excess = Mathf.Abs(end.y - anchor.y) - maxRise;
+            if (!gentle && !reversing && Mathf.Abs(end.x - anchor.x) > 0.00001f &&
+                excess > 0f && excess <= pixel * 1.01f)
+            {
+                end.y = anchor.y + Mathf.Sign(end.y - anchor.y) * maxRise;
+                length = Vector2.Distance(anchor, end);
+                gentle = true;
+            }
+            // At the 40 px body scale the spacing is one pixel. A rounded mouse
+            // step can be (1, 1) even on a 20-degree line. Keep the last valid
+            // anchor until a few pixels establish the slope, instead of ending
+            // the collider at every such step. Pending input creates no ink/cost.
+            // Created-path reversals, forbidden bodies and sustained steep input still split.
+            if (!gentle && !reversing && requestedLength < MinimumPointSpacing * 6f &&
+                SegmentAllowed(anchor, end))
+                return false;
+            if (!gentle || reversing)
             {
                 EndStroke();
                 anchor = requestedEnd;
@@ -403,6 +499,8 @@ namespace InkRunner.BlackInkPrototype
             CreatedLength = 0f;
             preparationRemaining = preparationSeconds;
             State = TrialState.Preparing;
+            wasSupported = false;
+            inkThicknessPixels = characterHeightPixels * thicknessRatio;
             held = false;
             suppressUntilRelease = Mouse.current != null && Mouse.current.leftButton.isPressed;
             if (characterAnimator)
@@ -485,6 +583,8 @@ namespace InkRunner.BlackInkPrototype
             pixelsPerWorldUnit = Mathf.Max(1f, pixelsPerWorldUnit);
             characterHeightPixels = Mathf.Max(1f, characterHeightPixels);
             inkThicknessPixels = Mathf.Max(1f, inkThicknessPixels);
+            thicknessRatio = Mathf.Clamp(thicknessRatio, 0.05f, 1.5f);
+            maximumSlope = Mathf.Clamp(maximumSlope, 5f, 80f);
         }
     }
 }

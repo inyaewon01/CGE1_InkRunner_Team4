@@ -17,7 +17,7 @@ public class TitleUIManager : MonoBehaviour
 {
     #region Constants
     // 로드 대상 씬 이름 (Build Settings에 등록되어 있어야 함)
-    private const string PLAY_SCENE_NAME = "PlayScene";
+    private const string PLAY_SCENE_NAME = "BlackInkTestScene";
 
     // 조작 안내 기본 문구
     private const string HOW_TO_PLAY_GUIDE_TEXT = "마우스 좌클릭: 선택한 먹 사용 / 우클릭: 검은 먹&흰 먹 전환 / ESC: 일시정지";
