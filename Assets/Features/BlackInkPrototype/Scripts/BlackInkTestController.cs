@@ -80,6 +80,7 @@ namespace InkRunner.BlackInkPrototype
         private BlackInkHud hud;
         private Vector2 startPosition;
         private Vector2 anchor;
+        private Vector2 anchorViewOrigin;
         private Vector2 previousScreen;
         private bool held, suppressUntilRelease, hasAnchor, focused = true;
         private int strokeDirection;
@@ -295,14 +296,8 @@ namespace InkRunner.BlackInkPrototype
             Vector2 screenDelta = screen - previousScreen;
             if (screenDelta.sqrMagnitude < 0.01f)
             {
-                // Following the runner must never paint a bridge by camera motion alone.
-                // After a held stationary frame, resume at a new world anchor on real movement.
-                if (endlessMode && State == TrialState.Running)
-                {
-                    EndStroke();
-                    return;
-                }
-                if (!flushEndpoint) return;
+                // Keep the existing stroke, but never paint or charge camera-only motion.
+                return;
             }
 
             // Sample the entire pointer sweep so a fast event cannot jump over UI or a no-draw zone.
@@ -314,18 +309,18 @@ namespace InkRunner.BlackInkPrototype
                 if (IsOverUI(sample)) { EndStroke(); continue; }
                 Vector2 point = ScreenToInk(sample);
                 if (!PointAllowed(point)) { EndStroke(); continue; }
-                if (!hasAnchor) { anchor = point; hasAnchor = true; continue; }
-                AppendTo(point);
+                if (!hasAnchor) { anchor = point; anchorViewOrigin = ScreenToInk(Vector2.zero); hasAnchor = true; continue; }
+                AppendTo(point, false, ScreenToInk(Vector2.zero) - anchorViewOrigin);
             }
             if (flushEndpoint && hasAnchor && !suppressUntilRelease && !IsOverUI(screen))
-                AppendTo(ScreenToInk(screen), true);
+                AppendTo(ScreenToInk(screen), true, ScreenToInk(Vector2.zero) - anchorViewOrigin);
             previousScreen = screen;
         }
 
         private void SetAnchorFromScreen(Vector2 screen)
         {
             Vector2 point = ScreenToInk(screen);
-            if (PointAllowed(point)) { anchor = point; hasAnchor = true; }
+            if (PointAllowed(point)) { anchor = point; anchorViewOrigin = ScreenToInk(Vector2.zero); hasAnchor = true; }
         }
 
         private Vector2 ScreenToInk(Vector2 screen)
@@ -358,12 +353,15 @@ namespace InkRunner.BlackInkPrototype
             return viewport.z > 0f && viewport.x >= 0f && viewport.x <= 1f && viewport.y >= 0f && viewport.y <= 1f;
         }
 
-        public bool AppendTo(Vector2 requestedEnd, bool forceShortSegment = false)
+        public bool AppendTo(Vector2 requestedEnd, bool forceShortSegment = false, Vector2 scrollDelta = default)
         {
             if (!hasAnchor || CurrentInk <= 0f) return false;
             float requestedLength = Vector2.Distance(anchor, requestedEnd);
             if (requestedLength < (forceShortSegment ? 0.00001f : MinimumPointSpacing)) return false;
-            Vector2 end = InkPathMath.ClipToBudget(anchor, requestedEnd, CurrentInk, costPerUnit);
+            float inputLength = (requestedEnd - anchor - scrollDelta).magnitude;
+            if (inputLength < 0.00001f) return false;
+            float fraction = Mathf.Min(1f, CurrentInk / (inputLength * costPerUnit));
+            Vector2 end = Vector2.Lerp(anchor, requestedEnd, fraction);
             float length = Vector2.Distance(anchor, end);
             if (length < 0.00001f) return false;
             int direction = end.x >= anchor.x ? 1 : -1;
@@ -395,6 +393,7 @@ namespace InkRunner.BlackInkPrototype
             {
                 EndStroke();
                 anchor = requestedEnd;
+                anchorViewOrigin = ScreenToInk(Vector2.zero);
                 hasAnchor = PointAllowed(requestedEnd);
                 feedback = $"Use a left-to-right or right-to-left path with slopes under {maximumSlope:0} degrees.";
                 return false;
@@ -436,8 +435,10 @@ namespace InkRunner.BlackInkPrototype
             PointCount++;
             SegmentCount++;
             CreatedLength += length;
-            CurrentInk = Mathf.Max(0f, CurrentInk - length * costPerUnit);
+            float chargedLength = (end - anchor - scrollDelta * fraction).magnitude;
+            CurrentInk = Mathf.Max(0f, CurrentInk - chargedLength * costPerUnit);
             anchor = end;
+            anchorViewOrigin = ScreenToInk(Vector2.zero);
             Physics2D.SyncTransforms();
             feedback = $"Created {CreatedLength:0.00} world units. Left drag draws black ink.";
             if (CurrentInk < 0.0001f)
