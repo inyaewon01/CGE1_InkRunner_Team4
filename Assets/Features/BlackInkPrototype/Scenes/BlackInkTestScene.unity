@@ -556,9 +556,10 @@ GameObject:
   - component: {fileID: 726109598}
   - component: {fileID: 726109599}
   - component: {fileID: 726109600}
+  - component: {fileID: 726109601}
   m_Layer: 0
   m_Name: obstacle_1
-  m_TagString: Untagged
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -737,6 +738,20 @@ EdgeCollider2D:
   m_AdjacentEndPoint: {x: 0, y: 0}
   m_UseAdjacentStartPoint: 0
   m_UseAdjacentEndPoint: 0
+--- !u!114 &726109601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 726109596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08098368162d403abdfd2881c20f3002, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Obstacle
+  obstacleName: obstacle_1
+  isInstantKill: 1
 --- !u!1 &800475852
 GameObject:
   m_ObjectHideFlags: 0
@@ -1016,11 +1031,23 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -3794283806486565272, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
       propertyPath: m_Material
-      value:
+      value: 
       objectReference: {fileID: 6200000, guid: 321acae7e73f56e4491c17f022227334, type: 2}
     - target: {fileID: -3794283806486565272, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
       propertyPath: m_GravityScale
       value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.1904762
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.1904762
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.1904762
       objectReference: {fileID: 0}
     - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1062,21 +1089,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.1904762
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.1904762
-      objectReference: {fileID: 0}
-    - target: {fileID: 3690189203634434632, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.1904762
-      objectReference: {fileID: 0}
     - target: {fileID: 5853082180637257578, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
       propertyPath: m_Material
-      value:
+      value: 
       objectReference: {fileID: 6200000, guid: 321acae7e73f56e4491c17f022227334, type: 2}
     - target: {fileID: 5853082180637257578, guid: 17afff7a0e16d8d439d0b943290bf08c, type: 3}
       propertyPath: m_IsTrigger

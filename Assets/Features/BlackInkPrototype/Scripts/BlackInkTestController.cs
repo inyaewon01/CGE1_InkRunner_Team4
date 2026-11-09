@@ -89,6 +89,7 @@ namespace InkRunner.BlackInkPrototype
         private readonly RaycastHit2D[] groundHits = new RaycastHit2D[16];
         private bool wasSupported;
         private string feedback = "Draw across the gap before the runner arrives.";
+        private string failureReason;
 
         private void Awake()
         {
@@ -251,7 +252,7 @@ namespace InkRunner.BlackInkPrototype
         {
             string state = State == TrialState.Preparing ? $"READY  {preparationRemaining:0.0}s  / draw now" :
                 State == TrialState.Running ? (endlessMode ? "RUNNING  / endless route" : "RUNNING  / bridge the gap") :
-                State == TrialState.Failed ? "FALLEN  / press Reset to retry" : "CROSSED  / test complete";
+                State == TrialState.Failed ? (!string.IsNullOrEmpty(failureReason) ? $"GAME OVER  / {failureReason} - press Reset" : "GAME OVER  / press Reset to retry") : "CROSSED  / test complete";
             if (hud) hud.Present(CurrentInk, maximumInk, characterBodyHeight, Thickness, costPerUnit,
                 clearPreviousOnNewStroke, PointCount, StrokeCount, state, feedback);
             if (hud && endlessMode)
@@ -486,6 +487,13 @@ namespace InkRunner.BlackInkPrototype
             character.rotation = 0f;
             character.linearVelocity = Vector2.zero;
             character.angularVelocity = 0f;
+            character.constraints = RigidbodyConstraints2D.FreezeRotation;
+            failureReason = null;
+            if (character)
+            {
+                var warriorCollision = character.GetComponent<InkWarriorCollision>();
+                if (warriorCollision) warriorCollision.ResetState();
+            }
             character.simulated = true;
             Physics2D.SyncTransforms();
             character.interpolation = interpolation;
@@ -555,13 +563,34 @@ namespace InkRunner.BlackInkPrototype
             }
         }
 
-        private void Finish(TrialState result)
+        public void Finish(TrialState result)
         {
             State = result;
             EndStroke();
-            character.linearVelocity = Vector2.zero;
-            if (result == TrialState.Failed) character.simulated = false;
+            if (character)
+            {
+                character.linearVelocity = Vector2.zero;
+                character.angularVelocity = 0f;
+                if (result == TrialState.Failed)
+                {
+                    character.constraints = RigidbodyConstraints2D.FreezeAll;
+                    character.simulated = false;
+                }
+            }
+
             if (characterAnimator) characterAnimator.speed = 0f;
+        }
+
+        public void Fail(string customFeedback = null)
+        {
+            if (State == TrialState.Failed) return;
+            failureReason = customFeedback;
+            Finish(TrialState.Failed);
+            if (!string.IsNullOrEmpty(customFeedback))
+            {
+                feedback = customFeedback;
+            }
+            UpdateHud();
         }
 
         private void OnApplicationFocus(bool value)
