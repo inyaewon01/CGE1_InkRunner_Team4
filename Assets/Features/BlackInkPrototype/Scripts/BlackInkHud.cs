@@ -22,6 +22,7 @@ namespace InkRunner.BlackInkPrototype
         private GraphicRaycaster raycaster;
         private RectTransform fillMask;
         private TextMeshProUGUI inkReadout;
+        private TextMeshProUGUI inkColorLabel;
         private TextMeshProUGUI measurements;
         private TextMeshProUGUI stateLabel;
         private TextMeshProUGUI feedbackLabel;
@@ -59,6 +60,9 @@ namespace InkRunner.BlackInkPrototype
                 new Vector2(546f, 246f));
             Label("BLACK INK / ENDLESS RUNNER", panel, new Vector2(20f, 12f), new Vector2(506f, 25f),
                 18f, Red, FontStyles.Bold);
+            inkColorLabel = Label("", panel, new Vector2(405f, 12f), new Vector2(121f, 25f),
+                18f, Red, FontStyles.Bold);
+            inkColorLabel.alignment = TextAlignmentOptions.TopRight;
             BuildGauge(panel, gaugeSource);
             inkReadout = Label("", panel, new Vector2(22f, 100f), new Vector2(504f, 27f), 19f, Ink,
                 FontStyles.Bold);
@@ -85,7 +89,7 @@ namespace InkRunner.BlackInkPrototype
         }
 
         public void Present(float current, float maximum, float bodyHeight, float thickness, float costPerUnit,
-            bool replace, int points, int strokes, string state, string feedback)
+            bool replace, int points, int strokes, string state, string feedback, string inkColor)
         {
             if (hudCanvas == null)
                 return;
@@ -98,6 +102,7 @@ namespace InkRunner.BlackInkPrototype
             fillMask.gameObject.SetActive(fraction > 0f);
             float availableLength = costPerUnit > 0f ? value / costPerUnit : 0f;
             inkReadout.text = $"INK  {value:0.0} / {Mathf.Max(0f, maximum):0.0}     |     {availableLength:0.00} u available";
+            inkColorLabel.text = inkColor;
             measurements.text = $"BODY  {bodyHeight:0.000} u     |     THICKNESS  {thickness:0.000} u\n" +
                                 $"COST  {costPerUnit:0.0} / u     |     PREVIOUS  {(replace ? "REPLACE" : "KEEP")}\n" +
                                 $"POINTS  {points}     |     STROKES  {strokes}";

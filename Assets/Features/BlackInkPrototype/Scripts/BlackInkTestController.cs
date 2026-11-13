@@ -77,6 +77,7 @@ namespace InkRunner.BlackInkPrototype
         private readonly List<InkStrokeGeometry> strokes = new List<InkStrokeGeometry>();
         private readonly List<Vector2> activePoints = new List<Vector2>();
         private InkStrokeGeometry activeStroke;
+        private bool whiteInk;
         private BlackInkHud hud;
         private Vector2 startPosition;
         private Vector2 anchor;
@@ -148,7 +149,7 @@ namespace InkRunner.BlackInkPrototype
             Mouse mouse = Mouse.current;
             if (mouse != null && !manualPointerForValidation)
                 ProcessPointer(mouse.position.ReadValue(), mouse.leftButton.wasPressedThisFrame,
-                    mouse.leftButton.isPressed, mouse.leftButton.wasReleasedThisFrame);
+                    mouse.leftButton.isPressed, mouse.leftButton.wasReleasedThisFrame, mouse.rightButton.wasPressedThisFrame);
             CleanupBehindCamera();
             UpdateHud();
         }
@@ -254,15 +255,26 @@ namespace InkRunner.BlackInkPrototype
                 State == TrialState.Running ? (endlessMode ? "RUNNING  / endless route" : "RUNNING  / bridge the gap") :
                 State == TrialState.Failed ? (!string.IsNullOrEmpty(failureReason) ? $"GAME OVER  / {failureReason} - press Reset" : "GAME OVER  / press Reset to retry") : "CROSSED  / test complete";
             if (hud) hud.Present(CurrentInk, maximumInk, characterBodyHeight, Thickness, costPerUnit,
-                clearPreviousOnNewStroke, PointCount, StrokeCount, state, feedback);
+                clearPreviousOnNewStroke, PointCount, StrokeCount, state, feedback, whiteInk ? "WHITE" : "BLACK");
             if (hud && endlessMode)
                 hud.PresentRunner(DistanceTravelled, ProjectedBodyHeightPixels, ProjectedInkThicknessPixels,
                     endlessWorld.ActivePlatformCount, endlessWorld.ActiveObstacleCount);
         }
 
         // Public input seam also used by deterministic editor validation; no legacy Input API.
-        public void ProcessPointer(Vector2 screen, bool pressed, bool down, bool released)
+        public void ProcessPointer(Vector2 screen, bool pressed, bool down, bool released, bool switchInk = false)
         {
+            if (switchInk && focused)
+            {
+                whiteInk = !whiteInk;
+                if (held)
+                {
+                    EndStroke();
+                    held = false;
+                    if (down) suppressUntilRelease = true;
+                }
+            }
+
             if (released || !down)
             {
                 if (released && held && !suppressUntilRelease && focused && InWindow(screen))
@@ -421,10 +433,10 @@ namespace InkRunner.BlackInkPrototype
             if (first)
             {
                 if (clearPreviousOnNewStroke) ClearStrokes();
-                GameObject strokeObject = new GameObject($"Black ink stroke {strokes.Count + 1:00}");
+                GameObject strokeObject = new GameObject($"{(whiteInk ? "White" : "Black")} ink stroke {strokes.Count + 1:00}");
                 strokeObject.transform.SetParent(inkRoot, false);
                 activeStroke = strokeObject.AddComponent<InkStrokeGeometry>();
-                activeStroke.Initialize(inkMaterial, Thickness, textureScale, edgeRoughness, surfaceMaterial);
+                activeStroke.Initialize(inkMaterial, Thickness, textureScale, edgeRoughness, surfaceMaterial, whiteInk);
                 strokes.Add(activeStroke);
                 activePoints.Clear();
                 activePoints.Add(anchor);
@@ -441,7 +453,7 @@ namespace InkRunner.BlackInkPrototype
             anchor = end;
             anchorViewOrigin = ScreenToInk(Vector2.zero);
             Physics2D.SyncTransforms();
-            feedback = $"Created {CreatedLength:0.00} world units. Left drag draws black ink.";
+            feedback = $"Created {CreatedLength:0.00} world units.";
             if (CurrentInk < 0.0001f)
             {
                 CurrentInk = 0f;
@@ -506,6 +518,7 @@ namespace InkRunner.BlackInkPrototype
             }
             CurrentInk = maximumInk;
             CreatedLength = 0f;
+            whiteInk = false;
             preparationRemaining = preparationSeconds;
             State = TrialState.Preparing;
             wasSupported = false;

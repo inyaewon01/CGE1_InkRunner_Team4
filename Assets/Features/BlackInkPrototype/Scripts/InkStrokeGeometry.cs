@@ -6,13 +6,13 @@ using UnityEngine.Rendering;
 namespace InkRunner.BlackInkPrototype
 {
     /// <summary>
-    /// A single brush stroke. All points are the walkable top surface in the
+    /// A single brush stroke. All points lie on its top edge in the
     /// scrolling terrain root's local space; thickness is measured vertically down.
-    /// The collision polygon contains the opaque body only. Small bristle tips and
+    /// For solid strokes, the collision polygon contains only the opaque body. Small bristle tips and
     /// the feathered lower edge belong to the visual mesh and have no colliders.
     /// </summary>
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(PolygonCollider2D))]
+    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public sealed class InkStrokeGeometry : MonoBehaviour
     {
         private const float CoordinateEpsilon = 0.00001f;
@@ -20,6 +20,7 @@ namespace InkRunner.BlackInkPrototype
         private const float FeatherDepthRatio = 0.24f;
         private static readonly float[] RibbonRows = { 0f, 0.28f, 0.72f, 1f, 1f + FeatherDepthRatio };
 
+        private static readonly int InkColorId = Shader.PropertyToID("_InkColor");
         private static readonly int ThicknessId = Shader.PropertyToID("_Thickness");
         private static readonly int TextureScaleId = Shader.PropertyToID("_TextureScale");
         private static readonly int StrokeLengthId = Shader.PropertyToID("_StrokeLength");
@@ -43,6 +44,7 @@ namespace InkRunner.BlackInkPrototype
         private float thickness = 1f;
         private float textureScale = 1f;
         private float edgeRoughness = 0.65f;
+        private bool hasCollision = true;
         private bool reversedTextureAnchor;
         private Vector2 originalTextureOrigin;
 
@@ -53,17 +55,28 @@ namespace InkRunner.BlackInkPrototype
 
         private void Awake()
         {
+            TryGetComponent(out polygonCollider);
             EnsureComponents();
         }
 
         public void Initialize(Material material, float thickness, float textureScale,
-            float edgeRoughness, PhysicsMaterial2D physicsMaterial)
+            float edgeRoughness, PhysicsMaterial2D physicsMaterial, bool whiteInk = false)
         {
             EnsureComponents();
             this.thickness = Mathf.Max(0.001f, thickness);
             this.textureScale = Mathf.Max(0.001f, textureScale);
             this.edgeRoughness = Mathf.Clamp01(edgeRoughness);
-            polygonCollider.sharedMaterial = physicsMaterial;
+            hasCollision = !whiteInk;
+            if (hasCollision)
+            {
+                EnsureCollider();
+                polygonCollider.sharedMaterial = physicsMaterial;
+            }
+            if (polygonCollider) polygonCollider.enabled = false;
+
+            materialProperties.Clear();
+            if (whiteInk)
+                materialProperties.SetColor(InkColorId, new Color(0.9f, 0.9f, 0.9f));
 
             if (material == null)
             {
@@ -141,7 +154,7 @@ namespace InkRunner.BlackInkPrototype
             {
                 WorldLength = 0f;
                 mesh.Clear();
-                polygonCollider.enabled = false;
+                if (polygonCollider) polygonCollider.enabled = false;
                 meshRenderer.enabled = false;
                 return;
             }
@@ -182,8 +195,6 @@ namespace InkRunner.BlackInkPrototype
                 meshFilter = GetComponent<MeshFilter>();
             if (meshRenderer == null)
                 meshRenderer = GetComponent<MeshRenderer>();
-            if (polygonCollider == null)
-                polygonCollider = GetComponent<PolygonCollider2D>();
             if (materialProperties == null)
                 materialProperties = new MaterialPropertyBlock();
             if (mesh == null)
@@ -191,9 +202,16 @@ namespace InkRunner.BlackInkPrototype
                 mesh = new Mesh { name = "Black ink continuous brush ribbon" };
                 mesh.MarkDynamic();
                 meshFilter.sharedMesh = mesh;
-                polygonCollider.enabled = false;
+                if (polygonCollider) polygonCollider.enabled = false;
                 meshRenderer.enabled = false;
             }
+        }
+
+        private void EnsureCollider()
+        {
+            if (polygonCollider) return;
+            if (!TryGetComponent(out polygonCollider))
+                polygonCollider = gameObject.AddComponent<PolygonCollider2D>();
         }
 
         private void Rebuild()
@@ -243,15 +261,19 @@ namespace InkRunner.BlackInkPrototype
             mesh.SetTriangles(triangles, 0, true);
             mesh.RecalculateBounds();
 
-            Vector2[] collisionPath = new Vector2[points.Count * 2];
-            for (int i = 0; i < points.Count; i++)
+            if (hasCollision)
             {
-                collisionPath[i] = points[i];
-                collisionPath[points.Count * 2 - 1 - i] = points[i] + Vector2.down * thickness;
+                EnsureCollider();
+                Vector2[] collisionPath = new Vector2[points.Count * 2];
+                for (int i = 0; i < points.Count; i++)
+                {
+                    collisionPath[i] = points[i];
+                    collisionPath[points.Count * 2 - 1 - i] = points[i] + Vector2.down * thickness;
+                }
+                polygonCollider.pathCount = 1;
+                polygonCollider.SetPath(0, collisionPath);
+                polygonCollider.enabled = true;
             }
-            polygonCollider.pathCount = 1;
-            polygonCollider.SetPath(0, collisionPath);
-            polygonCollider.enabled = true;
 
             materialProperties.SetFloat(ThicknessId, thickness);
             materialProperties.SetFloat(TextureScaleId, textureScale);
