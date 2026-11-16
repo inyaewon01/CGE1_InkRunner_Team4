@@ -27,11 +27,16 @@ namespace InkRunner.BlackInkPrototype
         [Tooltip("A fixed seed makes Reset replay the same randomly shuffled route.")]
         public int randomSeed = 27102026;
 
-        [Header("Decoration only: deliberately no obstacle physics")]
+        [Header("Obstacle spawning settings")]
         [Range(1, 6)] public int minimumPlatformsBetweenObstacles = 1;
         [Range(1, 6)] public int maximumPlatformsBetweenObstacles = 3;
         [Min(0.1f)] public float minimumObstacleHeight = 0.55f;
         [Min(0.1f)] public float maximumObstacleHeight = 0.95f;
+
+        [Tooltip("씬의 obstacle_1, obstacle_2 … 를 프리팹으로 만든 뒤 여기에 연결하세요.\n" +
+                 "SpriteRenderer · BoxCollider2D · Obstacle 컴포넌트가 포함된 오브젝트를 사용합니다.\n" +
+                 "비워 두면 기존 비주얼 전용(충돌 없음) 방식으로 생성됩니다.")]
+        public GameObject[] obstaclePrefabs = new GameObject[0];
 
         public int ActivePlatformCount => platforms.Count;
         public int ActiveObstacleCount { get; private set; }
@@ -202,6 +207,14 @@ namespace InkRunner.BlackInkPrototype
         private bool CreateObstacle(Transform platform, float platformWidth)
         {
             int index = nextObstacleVariant++ % obstacleSprites.Length;
+
+            // ── 프리팹 경로: obstaclePrefabs[index]가 연결되어 있으면 인스턴스화 ──
+            GameObject prefab = (obstaclePrefabs != null && index < obstaclePrefabs.Length)
+                ? obstaclePrefabs[index] : null;
+            if (prefab != null)
+                return CreateObstacleFromPrefab(prefab, platform, platformWidth, index);
+
+            // ── 레거시 경로: 비주얼 전용 (충돌 없음) ──
             Sprite sprite = obstacleSprites[index];
             if (!sprite) return false;
             Bounds bounds = sprite.bounds;
@@ -213,8 +226,68 @@ namespace InkRunner.BlackInkPrototype
             obstacle.transform.localScale = new Vector3(scale, scale, 1f);
             obstacle.transform.localPosition = new Vector3(RandomRange(platformWidth * 0.3f, platformWidth * 0.7f),
                 -(bounds.min.y + bounds.size.y * landmark.x) * scale, 0f);
-            // Behind the runner so passing through this intentionally non-colliding art is clear.
             AddSpriteRenderer(obstacle, sprite, 4);
+            ObstacleVariantsMask |= 1 << index;
+            return true;
+        }
+
+        /// <summary>
+        /// obstaclePrefabs 슬롯에 연결된 프리팹을 인스턴스화하여 플랫폼 위에 배치합니다.
+        /// 프리팹에는 SpriteRenderer, BoxCollider2D, Obstacle 컴포넌트가 포함되어야 합니다.
+        /// </summary>
+        private bool CreateObstacleFromPrefab(GameObject prefab, Transform platform, float platformWidth, int index)
+        {
+            // 스프라이트 크기 정보는 프리팹의 SpriteRenderer에서 가져옵니다.
+            var sr = prefab.GetComponent<SpriteRenderer>();
+            if (!sr || !sr.sprite)
+            {
+                Debug.LogWarning($"[EndlessInkWorld] obstaclePrefabs[{index}] 에 SpriteRenderer 또는 Sprite가 없습니다. " +
+                                 "레거시(비주얼 전용) 방식으로 대체합니다.", prefab);
+                // 레거시 경로로 폴백
+                Sprite fallback = index < obstacleSprites.Length ? obstacleSprites[index] : null;
+                if (!fallback) return false;
+                Bounds fb = fallback.bounds;
+                Vector2 flm = index < ObstacleLandmarks.Length ? ObstacleLandmarks[index] : new Vector2(0f, 1f);
+                float fh = RandomRange(minimumObstacleHeight, Mathf.Max(minimumObstacleHeight, maximumObstacleHeight));
+                float fs = fh / Mathf.Max(0.001f, fb.size.y * (flm.y - flm.x));
+                var fo = new GameObject($"obstacle_{index + 1} (visual only - no collision)");
+                fo.transform.SetParent(platform, false);
+                fo.transform.localScale = new Vector3(fs, fs, 1f);
+                fo.transform.localPosition = new Vector3(RandomRange(platformWidth * 0.3f, platformWidth * 0.7f),
+                    -(fb.min.y + fb.size.y * flm.x) * fs, 0f);
+                AddSpriteRenderer(fo, fallback, 4);
+                ObstacleVariantsMask |= 1 << index;
+                return true;
+            }
+
+            Sprite sprite = sr.sprite;
+            Bounds bounds = sprite.bounds;
+            Vector2 landmark = index < ObstacleLandmarks.Length ? ObstacleLandmarks[index] : new Vector2(0f, 1f);
+
+            // 가시 영역 높이에 맞춰 균등 스케일을 계산합니다.
+            float height = RandomRange(minimumObstacleHeight, Mathf.Max(minimumObstacleHeight, maximumObstacleHeight));
+            float scale  = height / Mathf.Max(0.001f, bounds.size.y * (landmark.y - landmark.x));
+
+            // 프리팹을 인스턴스화하고 플랫폼 자식으로 배치합니다.
+            GameObject instance = Object.Instantiate(prefab, platform);
+            instance.name = $"obstacle_{index + 1}";
+            instance.transform.localScale    = new Vector3(scale, scale, 1f);
+            instance.transform.localPosition = new Vector3(
+                RandomRange(platformWidth * 0.3f, platformWidth * 0.7f),
+                -(bounds.min.y + bounds.size.y * landmark.x) * scale,
+                0f);
+
+            // SpriteRenderer 정렬 순서를 플랫폼 레이어와 맞춥니다.
+            var instSr = instance.GetComponent<SpriteRenderer>();
+            if (instSr) instSr.sortingOrder = 4;
+
+            // Rigidbody2D가 없으면 Static으로 추가합니다 (Obstacle.cs 콜백 수신에 필요).
+            if (!instance.GetComponent<Rigidbody2D>())
+            {
+                var rb = instance.AddComponent<Rigidbody2D>();
+                rb.bodyType = RigidbodyType2D.Static;
+            }
+
             ObstacleVariantsMask |= 1 << index;
             return true;
         }
