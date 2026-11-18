@@ -35,6 +35,9 @@ namespace InkRunner.BlackInkPrototype
         [Header("Ink / measured reference pose")]
         [Min(0.01f)] public float maximumInk = 100f;
         [Min(0.01f)] public float costPerUnit = 10f;
+        [Min(0f)] public float inkRegenerationDelay = 1f;
+        [Tooltip("Fraction of maximum ink restored per second while running and not holding a valid draw gesture.")]
+        [Range(0f, 1f)] public float inkRegenerationRate = 0.2f;
         [Tooltip("run_01: head to boot sole, approximately 210 pixels / 100 PPU; excludes sword and cape.")]
         [Min(0.1f)] public float characterBodyHeight = 2.10f;
         [Range(0.05f, 1.5f)] public float thicknessRatio = 0.25f;
@@ -48,6 +51,8 @@ namespace InkRunner.BlackInkPrototype
         [Min(0f)] public float platformGap = 3f;
         [Tooltip("Maximum walkable / drawable slope. Steeper contacts block forward movement.")]
         [Range(5f, 80f)] public float maximumSlope = 60f;
+        [Tooltip("Maximum grounded step height as a fraction of the fixed character body height.")]
+        [Range(0f, 0.8f)] public float maximumStepRatio = 0.4f;
         public float failureY = -5f;
         public Rect drawingBounds = new Rect(-12f, -3f, 28f, 7.5f);
 
@@ -84,11 +89,16 @@ namespace InkRunner.BlackInkPrototype
         private Vector2 anchorViewOrigin;
         private Vector2 previousScreen;
         private bool held, suppressUntilRelease, hasAnchor, focused = true;
+        private bool validDrawHeld;
+        private float inkRegenerationReadyAt;
         private int strokeDirection;
         private float preparationRemaining;
         private readonly ContactPoint2D[] groundContacts = new ContactPoint2D[32];
         private readonly RaycastHit2D[] groundHits = new RaycastHit2D[16];
         private bool wasSupported;
+        private bool stepLiftPending;
+        private readonly RaycastHit2D[] stepHits = new RaycastHit2D[16];
+        private readonly Collider2D[] stepOverlaps = new Collider2D[16];
         private string feedback = "Draw across the gap before the runner arrives.";
         private string failureReason;
 
@@ -150,14 +160,30 @@ namespace InkRunner.BlackInkPrototype
             if (mouse != null && !manualPointerForValidation)
                 ProcessPointer(mouse.position.ReadValue(), mouse.leftButton.wasPressedThisFrame,
                     mouse.leftButton.isPressed, mouse.leftButton.wasReleasedThisFrame, mouse.rightButton.wasPressedThisFrame);
+            RegenerateInk();
             CleanupBehindCamera();
             UpdateHud();
+        }
+
+        private void RegenerateInk()
+        {
+            if (State != TrialState.Running || validDrawHeld) return;
+            float recoverySeconds = Mathf.Max(0f,
+                Time.time - Mathf.Max(inkRegenerationReadyAt, Time.time - Time.deltaTime));
+            CurrentInk = Mathf.Min(maximumInk,
+                CurrentInk + maximumInk * inkRegenerationRate * recoverySeconds);
         }
 
         private void FixedUpdate()
         {
             if (!character) return;
             Vector2 velocity = character.linearVelocity;
+            if (stepLiftPending)
+            {
+                // MovePosition's lift velocity must not become an airborne jump.
+                velocity.y = 0f;
+                stepLiftPending = false;
+            }
             if (State != TrialState.Running)
             {
                 velocity.x = 0f;
@@ -183,6 +209,12 @@ namespace InkRunner.BlackInkPrototype
                     groundContacts[i].point.y <= characterBody.bounds.center.y)
                     normal = n;
             }
+            if (wasSupported && normal != Vector2.zero && TryStepUp(filter))
+            {
+                wasSupported = false;
+                stepLiftPending = true;
+                return;
+            }
             // Only recover an immediately adjacent support after a grounded step.
             // There is no position snap, long downward ray, or attachment across a cliff.
             if (normal == Vector2.zero && wasSupported && velocity.y <= 0.01f)
@@ -206,6 +238,94 @@ namespace InkRunner.BlackInkPrototype
             else velocity.x = wall ? 0f : runSpeed;
             character.linearVelocity = velocity;
         }
+
+        private bool TryStepUp(ContactFilter2D filter)
+        {
+            float limit = characterBodyHeight * maximumStepRatio;
+            if (limit <= 0f || runSpeed <= 0f) return false;
+            Bounds body = characterBody.bounds;
+            float skin = Mathf.Max(0.001f, characterBodyHeight * 0.01f);
+            float minimumNormalY = Mathf.Cos(maximumSlope * Mathf.Deg2Rad) - 0.0001f;
+            if (!TryStepSurface(new Vector2(body.center.x, body.min.y + skin),
+                    characterBodyHeight * 0.5f, filter, minimumNormalY, out RaycastHit2D support)) return false;
+            Vector2 supportPoint = support.point;
+            Vector2 groundNormal = SurfaceNormal(support.collider, support.point, support.normal);
+            int count = characterBody.Cast(Vector2.right, filter, stepHits, runSpeed * Time.fixedDeltaTime + skin);
+            RaycastHit2D front = default;
+            for (int i = 0; i < count; i++)
+            {
+                RaycastHit2D hit = stepHits[i];
+                Vector2 n = SurfaceNormal(hit.collider, hit.point, hit.normal);
+                if (n.x < -0.01f && n.y < minimumNormalY && n.y > -0.1f &&
+                    (!front.collider || hit.distance < front.distance)) front = hit;
+            }
+            if (!front.collider || IsStepObstacle(front.collider)) return false;
+
+            float baseline = supportPoint.y - groundNormal.x / groundNormal.y * (front.point.x - supportPoint.x);
+            Vector2 probe = new Vector2(front.point.x + skin, baseline + limit + skin);
+            if (!TryStepSurface(probe, limit + skin * 2f, filter, minimumNormalY, out RaycastHit2D top))
+                return false;
+            Vector2 topNormal = SurfaceNormal(top.collider, top.point, top.normal);
+            float height = top.point.y + topNormal.x / topNormal.y * skin - baseline;
+            if (height <= skin || height > limit + 0.0001f) return false;
+            Vector2 landingProbe = probe + new Vector2(body.size.x, -topNormal.x / topNormal.y * body.size.x);
+            if (!TryStepSurface(landingProbe, limit + skin * 2f,
+                    filter, minimumNormalY, out RaycastHit2D landing) ||
+                Mathf.Abs(landing.point.y - top.point.y) > Mathf.Tan(maximumSlope * Mathf.Deg2Rad) * body.size.x + skin) return false;
+
+            // Require continuous supporting floor up to the riser, including edge-only terrain.
+            for (float x = body.center.x; x < front.point.x; x += skin)
+            {
+                float floorY = supportPoint.y - groundNormal.x / groundNormal.y * (x - supportPoint.x);
+                if (!TryStepSurface(new Vector2(x, floorY + skin), skin * 2f,
+                        filter, minimumNormalY, out _)) return false;
+            }
+
+            float lift = top.point.y - body.min.y + skin;
+            if (lift <= 0f) return false;
+            count = characterBody.Cast(Vector2.up, filter, stepHits, lift);
+            for (int i = 0; i < count; i++)
+                if (stepHits[i].distance < lift && stepHits[i].normal.y < -0.01f) return false;
+            count = Physics2D.OverlapCapsule((Vector2)body.center + Vector2.up * lift,
+                body.size, characterBody.direction, character.rotation, filter, stepOverlaps);
+            if (count == stepOverlaps.Length) return false;
+            for (int i = 0; i < count; i++)
+                if (stepOverlaps[i].attachedRigidbody != character) return false;
+
+            Vector2 raisedCenter = (Vector2)body.center + Vector2.up * lift;
+            float landingDistance = Mathf.Max(0f, front.point.x + body.size.x - body.center.x);
+            count = Physics2D.CapsuleCast(raisedCenter, body.size, characterBody.direction,
+                character.rotation, Vector2.right, filter, stepHits, landingDistance);
+            if (count == stepHits.Length) return false;
+            for (int i = 0; i < count; i++)
+            {
+                RaycastHit2D hit = stepHits[i];
+                if (hit.collider.attachedRigidbody == character) continue;
+                if (IsStepObstacle(hit.collider) ||
+                    SurfaceNormal(hit.collider, hit.point, hit.normal).y < minimumNormalY) return false;
+            }
+
+            character.MovePosition(character.position + Vector2.up * lift);
+            return true;
+        }
+
+        private bool TryStepSurface(Vector2 origin, float distance, ContactFilter2D filter,
+            float minimumNormalY, out RaycastHit2D surface)
+        {
+            int count = Physics2D.Raycast(origin, Vector2.down, filter, groundHits, distance);
+            surface = default;
+            for (int i = 0; i < count; i++)
+            {
+                RaycastHit2D hit = groundHits[i];
+                if (hit.collider.attachedRigidbody == character) continue;
+                if (!surface.collider || hit.distance < surface.distance) surface = hit;
+            }
+            return surface.collider && !IsStepObstacle(surface.collider) &&
+                SurfaceNormal(surface.collider, surface.point, surface.normal).y >= minimumNormalY;
+        }
+
+        private static bool IsStepObstacle(Collider2D surface) =>
+            surface.GetComponentInParent<Obstacle>() || surface.tag == "Obstacle";
 
         // Polygon decomposition can return a steep corner normal on a densely
         // sampled, walkable ink top. Use the actual ribbon segment near that top;
@@ -279,6 +399,8 @@ namespace InkRunner.BlackInkPrototype
             {
                 if (released && held && !suppressUntilRelease && focused && InWindow(screen))
                     PaintSweep(screen, true);
+                if (validDrawHeld) inkRegenerationReadyAt = Time.time + inkRegenerationDelay;
+                validDrawHeld = false;
                 EndStroke();
                 held = false;
                 suppressUntilRelease = false;
@@ -290,6 +412,9 @@ namespace InkRunner.BlackInkPrototype
                 EndStroke();
                 held = true;
                 previousScreen = screen;
+                // An empty tank still counts as a draw attempt until the left button is released.
+                validDrawHeld = !suppressUntilRelease && !IsOverUI(screen) && InWindow(screen) &&
+                    PointAllowed(ScreenToInk(screen));
                 suppressUntilRelease = suppressUntilRelease || IsOverUI(screen) || !InWindow(screen) || CurrentInk <= 0f;
                 if (!suppressUntilRelease) SetAnchorFromScreen(screen);
                 return;
@@ -322,6 +447,7 @@ namespace InkRunner.BlackInkPrototype
                 if (IsOverUI(sample)) { EndStroke(); continue; }
                 Vector2 point = ScreenToInk(sample);
                 if (!PointAllowed(point)) { EndStroke(); continue; }
+                validDrawHeld = true;
                 if (!hasAnchor) { anchor = point; anchorViewOrigin = ScreenToInk(Vector2.zero); hasAnchor = true; continue; }
                 AppendTo(point, false, ScreenToInk(Vector2.zero) - anchorViewOrigin);
             }
@@ -459,7 +585,7 @@ namespace InkRunner.BlackInkPrototype
                 CurrentInk = 0f;
                 EndStroke();
                 suppressUntilRelease = true;
-                feedback = "Ink empty. Existing paths stay. Refill, then start a new click.";
+                feedback = "Ink empty. Release the left button to let ink recover.";
             }
             return true;
         }
@@ -519,9 +645,12 @@ namespace InkRunner.BlackInkPrototype
             CurrentInk = maximumInk;
             CreatedLength = 0f;
             whiteInk = false;
+            validDrawHeld = false;
+            inkRegenerationReadyAt = Time.time + inkRegenerationDelay;
             preparationRemaining = preparationSeconds;
             State = TrialState.Preparing;
             wasSupported = false;
+            stepLiftPending = false;
             inkThicknessPixels = characterHeightPixels * thicknessRatio;
             held = false;
             suppressUntilRelease = Mouse.current != null && Mouse.current.leftButton.isPressed;
@@ -579,6 +708,7 @@ namespace InkRunner.BlackInkPrototype
         public void Finish(TrialState result)
         {
             State = result;
+            validDrawHeld = false;
             EndStroke();
             if (character)
             {
@@ -609,17 +739,27 @@ namespace InkRunner.BlackInkPrototype
         private void OnApplicationFocus(bool value)
         {
             focused = value;
+            if (validDrawHeld) inkRegenerationReadyAt = Time.time + inkRegenerationDelay;
+            validDrawHeld = false;
             EndStroke();
             held = false;
             suppressUntilRelease = true;
         }
 
-        private void OnDisable() { EndStroke(); held = false; }
+        private void OnDisable()
+        {
+            if (validDrawHeld) inkRegenerationReadyAt = Time.time + inkRegenerationDelay;
+            validDrawHeld = false;
+            EndStroke();
+            held = false;
+        }
 
         private void OnValidate()
         {
             maximumInk = Mathf.Max(0.01f, maximumInk);
             costPerUnit = Mathf.Max(0.01f, costPerUnit);
+            inkRegenerationDelay = Mathf.Max(0f, inkRegenerationDelay);
+            inkRegenerationRate = Mathf.Clamp01(inkRegenerationRate);
             maximumPoints = Mathf.Max(2, maximumPoints);
             maximumSegments = Mathf.Max(1, maximumSegments);
             maximumStrokes = Mathf.Max(1, maximumStrokes);
