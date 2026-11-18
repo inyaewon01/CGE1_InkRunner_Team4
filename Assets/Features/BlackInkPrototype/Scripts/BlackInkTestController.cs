@@ -569,6 +569,7 @@ namespace InkRunner.BlackInkPrototype
                 PointCount++;
                 strokeDirection = direction;
             }
+            Vector2 paintedStart = anchor;
             activePoints.Add(end);
             activeStroke.SetPoints(activePoints);
             PointCount++;
@@ -579,6 +580,8 @@ namespace InkRunner.BlackInkPrototype
             anchor = end;
             anchorViewOrigin = ScreenToInk(Vector2.zero);
             Physics2D.SyncTransforms();
+            if (whiteInk && endlessWorld)
+                endlessWorld.PaintWhiteInk(inkRoot.TransformPoint(paintedStart), inkRoot.TransformPoint(end), Thickness);
             feedback = $"Created {CreatedLength:0.00} world units.";
             if (CurrentInk < 0.0001f)
             {

@@ -22,7 +22,7 @@ public class Obstacle : MonoBehaviour
     /// <summary>
     /// 충돌 시 즉사 여부 프로퍼티
     /// </summary>
-    public bool IsInstantKill => isInstantKill;
+    public bool IsInstantKill => isInstantKill && isActiveAndEnabled;
 
     private Collider2D col2D;
 
@@ -46,6 +46,7 @@ public class Obstacle : MonoBehaviour
     /// </summary>
     private void HandleCollision(GameObject targetObject)
     {
+        if (!isActiveAndEnabled) return;
         // 1. InkWarriorCollision 컴포넌트 직접 탐색
         if (targetObject.TryGetComponent<InkWarriorCollision>(out var warrior) ||
             (warrior = targetObject.GetComponentInParent<InkWarriorCollision>()) != null ||

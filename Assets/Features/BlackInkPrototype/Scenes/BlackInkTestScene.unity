@@ -1058,7 +1058,7 @@ MonoBehaviour:
   minimumObstacleHeight: 0.55
   maximumObstacleHeight: 0.95
   obstaclePrefabs:
-  - {fileID: 726109596}
+  - {fileID: 5024063392435679861, guid: 26fd24f342d54064abad4a39986b7e8f, type: 3}
   generatedRoot: {fileID: 1848131066}
 --- !u!4 &1229050246
 Transform:
@@ -1772,7 +1772,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5024063392435679861, guid: 26fd24f342d54064abad4a39986b7e8f, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8212011690184230487, guid: 26fd24f342d54064abad4a39986b7e8f, type: 3}
       propertyPath: m_LocalPosition.x

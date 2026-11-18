@@ -37,6 +37,10 @@ namespace InkRunner.BlackInkPrototype
                  "SpriteRenderer · BoxCollider2D · Obstacle 컴포넌트가 포함된 오브젝트를 사용합니다.\n" +
                  "비워 두면 기존 비주얼 전용(충돌 없음) 방식으로 생성됩니다.")]
         public GameObject[] obstaclePrefabs = new GameObject[0];
+        [Tooltip("Unique painted cells required out of ten cells across an obstacle's base.")]
+        [Range(0.1f, 1f)] public float whiteInkCoverageThreshold = 0.6f;
+
+        private int ObstacleVariantCount => Mathf.Max(obstacleSprites.Length, obstaclePrefabs != null ? obstaclePrefabs.Length : 0);
 
         public int ActivePlatformCount => platforms.Count;
         public int ActiveObstacleCount { get; private set; }
@@ -75,6 +79,9 @@ namespace InkRunner.BlackInkPrototype
             public GameObject root;
             public float left, right;
             public bool hasObstacle;
+            public GameObject obstacle;
+            public int paintedCells;
+            public int paintedCellCount;
         }
 
         private readonly List<Platform> platforms = new List<Platform>();
@@ -107,7 +114,7 @@ namespace InkRunner.BlackInkPrototype
             VisibleVariantsMask = ObstacleVariantsMask = 0;
             platformsUntilObstacle = 2;
             previousGap = 0f;
-            nextObstacleVariant = random.Next(Mathf.Max(1, obstacleSprites.Length));
+            nextObstacleVariant = random.Next(Mathf.Max(1, ObstacleVariantCount));
             float left = worldCamera ? CameraEdge(0f) : bodyFoot.x - 2f;
             nextLeft = Mathf.Min(left - 1f, bodyFoot.x - 0.75f);
             var container = new GameObject("Generated platforms (bounded stream)");
@@ -191,9 +198,10 @@ namespace InkRunner.BlackInkPrototype
 
             var platform = new Platform { root = platformObject, left = nextLeft, right = nextLeft + width };
             // The first platform is clear, then decorations occur every 1-3 platforms.
-            if (TotalPlatformsCreated > 0 && --platformsUntilObstacle <= 0 && obstacleSprites.Length > 0)
+            if (TotalPlatformsCreated > 0 && --platformsUntilObstacle <= 0 && ObstacleVariantCount > 0)
             {
-                platform.hasObstacle = CreateObstacle(platformObject.transform, width);
+                platform.obstacle = CreateObstacle(platformObject.transform, width);
+                platform.hasObstacle = platform.obstacle;
                 if (platform.hasObstacle) ActiveObstacleCount++;
                 platformsUntilObstacle = random.Next(Mathf.Max(1, minimumPlatformsBetweenObstacles),
                     Mathf.Max(minimumPlatformsBetweenObstacles, maximumPlatformsBetweenObstacles) + 1);
@@ -204,9 +212,9 @@ namespace InkRunner.BlackInkPrototype
             previousGap = gapAfter;
         }
 
-        private bool CreateObstacle(Transform platform, float platformWidth)
+        private GameObject CreateObstacle(Transform platform, float platformWidth)
         {
-            int index = nextObstacleVariant++ % obstacleSprites.Length;
+            int index = nextObstacleVariant++ % ObstacleVariantCount;
 
             // ── 프리팹 경로: obstaclePrefabs[index]가 연결되어 있으면 인스턴스화 ──
             GameObject prefab = (obstaclePrefabs != null && index < obstaclePrefabs.Length)
@@ -215,8 +223,8 @@ namespace InkRunner.BlackInkPrototype
                 return CreateObstacleFromPrefab(prefab, platform, platformWidth, index);
 
             // ── 레거시 경로: 비주얼 전용 (충돌 없음) ──
-            Sprite sprite = obstacleSprites[index];
-            if (!sprite) return false;
+            Sprite sprite = index < obstacleSprites.Length ? obstacleSprites[index] : null;
+            if (!sprite) return null;
             Bounds bounds = sprite.bounds;
             Vector2 landmark = index < ObstacleLandmarks.Length ? ObstacleLandmarks[index] : new Vector2(0f, 1f);
             float height = RandomRange(minimumObstacleHeight, Mathf.Max(minimumObstacleHeight, maximumObstacleHeight));
@@ -228,14 +236,14 @@ namespace InkRunner.BlackInkPrototype
                 -(bounds.min.y + bounds.size.y * landmark.x) * scale, 0f);
             AddSpriteRenderer(obstacle, sprite, 4);
             ObstacleVariantsMask |= 1 << index;
-            return true;
+            return obstacle;
         }
 
         /// <summary>
         /// obstaclePrefabs 슬롯에 연결된 프리팹을 인스턴스화하여 플랫폼 위에 배치합니다.
         /// 프리팹에는 SpriteRenderer, BoxCollider2D, Obstacle 컴포넌트가 포함되어야 합니다.
         /// </summary>
-        private bool CreateObstacleFromPrefab(GameObject prefab, Transform platform, float platformWidth, int index)
+        private GameObject CreateObstacleFromPrefab(GameObject prefab, Transform platform, float platformWidth, int index)
         {
             // 스프라이트 크기 정보는 프리팹의 SpriteRenderer에서 가져옵니다.
             var sr = prefab.GetComponent<SpriteRenderer>();
@@ -245,7 +253,7 @@ namespace InkRunner.BlackInkPrototype
                                  "레거시(비주얼 전용) 방식으로 대체합니다.", prefab);
                 // 레거시 경로로 폴백
                 Sprite fallback = index < obstacleSprites.Length ? obstacleSprites[index] : null;
-                if (!fallback) return false;
+                if (!fallback) return null;
                 Bounds fb = fallback.bounds;
                 Vector2 flm = index < ObstacleLandmarks.Length ? ObstacleLandmarks[index] : new Vector2(0f, 1f);
                 float fh = RandomRange(minimumObstacleHeight, Mathf.Max(minimumObstacleHeight, maximumObstacleHeight));
@@ -257,7 +265,7 @@ namespace InkRunner.BlackInkPrototype
                     -(fb.min.y + fb.size.y * flm.x) * fs, 0f);
                 AddSpriteRenderer(fo, fallback, 4);
                 ObstacleVariantsMask |= 1 << index;
-                return true;
+                return fo;
             }
 
             Sprite sprite = sr.sprite;
@@ -288,10 +296,42 @@ namespace InkRunner.BlackInkPrototype
                 rb.bodyType = RigidbodyType2D.Static;
             }
 
+            instance.SetActive(true);
             ObstacleVariantsMask |= 1 << index;
-            return true;
+            return instance;
         }
 
+        public void PaintWhiteInk(Vector2 start, Vector2 end, float thickness)
+        {
+            if (thickness <= 0f) return;
+            int required = Mathf.Clamp(Mathf.CeilToInt(whiteInkCoverageThreshold * 10f - 0.00001f), 1, 10);
+            foreach (Platform platform in platforms)
+            {
+                if (!platform.hasObstacle || !platform.obstacle || !platform.obstacle.activeInHierarchy) continue;
+                Collider2D collider = platform.obstacle.GetComponent<Collider2D>();
+                SpriteRenderer renderer = platform.obstacle.GetComponent<SpriteRenderer>();
+                if (!collider && !renderer) continue;
+                Bounds bounds = collider ? collider.bounds : renderer.bounds;
+                float cellWidth = bounds.size.x / 10f;
+                if (cellWidth <= 0f) continue;
+                if (!InkPathMath.BodyIntersectsBounds(start, end, thickness, bounds)) continue;
+
+                for (int cell = 0; cell < 10; cell++)
+                {
+                    int bit = 1 << cell;
+                    if ((platform.paintedCells & bit) != 0) continue;
+                    Bounds area = new Bounds(new Vector3(bounds.min.x + (cell + 0.5f) * cellWidth,
+                        bounds.center.y), new Vector3(cellWidth * 0.999f, bounds.size.y, 1f));
+                    if (!InkPathMath.BodyIntersectsBounds(start, end, thickness, area)) continue;
+                    platform.paintedCells |= bit;
+                    platform.paintedCellCount++;
+                }
+                if (platform.paintedCellCount < required) continue;
+                platform.obstacle.SetActive(false);
+                platform.hasObstacle = false;
+                ActiveObstacleCount--;
+            }
+        }
         private void AddSpriteRenderer(GameObject target, Sprite sprite, int sortingOrder)
         {
             SpriteRenderer renderer = target.AddComponent<SpriteRenderer>();
