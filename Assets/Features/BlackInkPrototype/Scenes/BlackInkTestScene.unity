@@ -544,11 +544,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!1 &726109596 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5024063392435679861, guid: 26fd24f342d54064abad4a39986b7e8f, type: 3}
-  m_PrefabInstance: {fileID: 4149075974680917897}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &726109597 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8212011690184230487, guid: 26fd24f342d54064abad4a39986b7e8f, type: 3}
@@ -696,6 +691,8 @@ MonoBehaviour:
   groundViewportY: 0.27
   maximumInk: 100
   costPerUnit: 10
+  inkRegenerationDelay: 1
+  inkRegenerationRate: 0.2
   characterBodyHeight: 0.4
   thicknessRatio: 0.25
   minimumPointSpacingRatio: 0.025
@@ -704,6 +701,7 @@ MonoBehaviour:
   runSpeed: 1.8
   platformGap: 0
   maximumSlope: 60
+  maximumStepRatio: 0.4
   failureY: -5
   drawingBounds:
     serializedVersion: 2
@@ -1059,6 +1057,9 @@ MonoBehaviour:
   maximumObstacleHeight: 0.95
   obstaclePrefabs:
   - {fileID: 5024063392435679861, guid: 26fd24f342d54064abad4a39986b7e8f, type: 3}
+  - {fileID: 4356537156928722293, guid: 89a3358f86f80d346889d109f4005665, type: 3}
+  - {fileID: 7442155880910623885, guid: 803f6352867596c4c8c220a6a5023aa9, type: 3}
+  whiteInkCoverageThreshold: 0.6
   generatedRoot: {fileID: 1848131066}
 --- !u!4 &1229050246
 Transform:
@@ -1752,7 +1753,7 @@ Transform:
   m_GameObject: {fileID: 2014034245}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.1523, y: 2.484, z: -10}
+  m_LocalPosition: {x: 8.1523, y: 1.2, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

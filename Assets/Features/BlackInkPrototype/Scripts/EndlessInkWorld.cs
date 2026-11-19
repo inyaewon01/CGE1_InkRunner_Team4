@@ -272,18 +272,50 @@ namespace InkRunner.BlackInkPrototype
             Bounds bounds = sprite.bounds;
             Vector2 landmark = index < ObstacleLandmarks.Length ? ObstacleLandmarks[index] : new Vector2(0f, 1f);
 
-            // 가시 영역 높이에 맞춰 균등 스케일을 계산합니다.
-            float height = RandomRange(minimumObstacleHeight, Mathf.Max(minimumObstacleHeight, maximumObstacleHeight));
-            float scale  = height / Mathf.Max(0.001f, bounds.size.y * (landmark.y - landmark.x));
-
             // 프리팹을 인스턴스화하고 플랫폼 자식으로 배치합니다.
             GameObject instance = Object.Instantiate(prefab, platform);
             instance.name = $"obstacle_{index + 1}";
-            instance.transform.localScale    = new Vector3(scale, scale, 1f);
-            instance.transform.localPosition = new Vector3(
-                RandomRange(platformWidth * 0.3f, platformWidth * 0.7f),
-                -(bounds.min.y + bounds.size.y * landmark.x) * scale,
-                0f);
+
+            Vector3 prefabScale = prefab.transform.localScale;
+            Vector3 localPos = prefab.transform.localPosition;
+
+            // 1. 공중/천장형 대형 기믹 (obstacle_3: 대검 등)
+            if (prefab.name.Contains("3") || index == 2)
+            {
+                instance.transform.localScale = (prefabScale != Vector3.one) ? prefabScale : Vector3.one;
+                float targetY = localPos.y != 0f ? localPos.y : 5.58f;
+                instance.transform.localPosition = new Vector3(
+                    RandomRange(platformWidth * 0.3f, platformWidth * 0.7f),
+                    targetY,
+                    0f);
+            }
+            // 2. 일반 지면 장애물 (obstacle_1, obstacle_2 및 향후 추가될 지면 장애물들)
+            else
+            {
+                // 스케일 결정: 프리팹에 커스텀 스케일이 지정되어 있으면 존중하고, 기본(1,1,1)이면 난수 높이 스케일링
+                float scaleY;
+                if (prefabScale != Vector3.one)
+                {
+                    instance.transform.localScale = prefabScale;
+                    scaleY = Mathf.Abs(prefabScale.y);
+                }
+                else
+                {
+                    float height = RandomRange(minimumObstacleHeight, Mathf.Max(minimumObstacleHeight, maximumObstacleHeight));
+                    float scale = height / Mathf.Max(0.001f, bounds.size.y * (landmark.y - landmark.x));
+                    instance.transform.localScale = new Vector3(scale, scale, 1f);
+                    scaleY = scale;
+                }
+
+                // 위치 결정: 프리팹 Transform의 오염된 localPosition.y를 무시하고,
+                // 스프라이트의 최하단(landmark.x)이 발판 윗면(Y = 0)에 정확히 밀착되도록 계산
+                float groundY = -(bounds.min.y + bounds.size.y * landmark.x) * scaleY;
+
+                instance.transform.localPosition = new Vector3(
+                    RandomRange(platformWidth * 0.3f, platformWidth * 0.7f),
+                    groundY,
+                    0f);
+            }
 
             // SpriteRenderer 정렬 순서를 플랫폼 레이어와 맞춥니다.
             var instSr = instance.GetComponent<SpriteRenderer>();
